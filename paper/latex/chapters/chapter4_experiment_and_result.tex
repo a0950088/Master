@@ -1,0 +1,131 @@
+\documentclass[class=NCU_thesis, crop=false]{standalone}
+\begin{document}
+
+\chapter{實驗設計與結果}
+
+\section{音源分離評估}
+本節將比較兩個不同的音源分離模型，Aug4mss~\cite{Chiu_ChingYu2020MixingSpecific}
+與本研究使用的Band-Split RNN~\cite{Luo_Yi2022MusicSourceSeparation}
+在小提琴與鋼琴混合音訊資料上的表現。
+
+\subsection{音源分離資料集}
+由於版權問題，多軌錄音檔通常不會提供每個錄音音軌的資料，
+因此本研究蒐集並整合了多個公開資料集作為訓練資料，公開資料集包含
+由John Thickstun等人提供的MusicNet~\cite{Thickstun2017Learning, Thickstun2018Invariances}、
+Muneratti Ortega等人提供的Expressive Solo Violin~\cite{Muneratti_Ortega2021Expressive}與
+Dong, Hao-Wen等人提供的Bach Violin Dataset~\cite{Dong_HaoWen2021Bach}。
+
+MusicNet資料集為收集了330個古典音樂錄音的大資料集，
+錄音包含鋼琴獨奏、小提琴獨奏、大提琴獨奏、長笛獨奏、鋼琴與樂器合奏、管樂合奏與弦樂合奏等組合，
+我們從資料集中挑選出鋼琴獨奏與小提琴獨奏的音訊資料作為訓練資料集的一部分。
+Expressive Solo Violin資料集是由專業的小提琴家在同一天錄製九個不同曲子片段的音檔，
+每一個片段會以不同的音樂表達方式演奏三次，並使用多個電容式麥克風同時錄音。
+我們採用了資料集中所有的音訊資料(81個片段)作為訓練資料集的一部分。
+Bach Violin Dataset為整合了高品質公開錄音的巴赫小提琴獨奏奏鳴曲(BWV 1001-1006)資料集，
+其中包含17位小提琴家在不同的演奏場所下錄製的資料，
+我們採用有提供音訊檔案的資料作為訓練資料集的一部分。
+
+整合完畢的訓練資料集如\cref{table:table-ours-training-dataset}所示，
+小提琴獨奏音檔的總時長為5小時24分47秒，鋼琴獨奏音檔的總時長為15小時06分37秒。
+因此我們使用隨機混合的方式來平均資料，
+隨機選取兩種音檔10秒鐘的片段混合作為一筆訓練資料，共取2000筆，驗證資料則是隨機取100筆。
+
+\begin{table}[h]
+    \centering
+    \caption{整合的訓練資料集}
+    \label{table:table-ours-training-dataset}
+    \begin{tabular}{|c|c|c|}
+        \hline
+        \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{小提琴音源} & \multicolumn{1}{|c|}{鋼琴音源} \\
+        \hline
+        總時長 & 5hr 24min 47sec & 15hr 6min 37sec \\
+        \hline
+        Channel & Mono & Mono \\
+        \hline
+        音訊格式 & WAV & WAV \\
+        \hline
+    \end{tabular}
+\end{table}
+
+為了公平比較評估結果，
+評估資料集我們採用~\cite{Chiu_ChingYu2020MixingSpecific}所提供的公開整合資料集進行評估，
+此資料集是Chiu Ching-Yu等人從公開資料集MedleyDB~\cite{Bittner2014MedleyDB}挑選小提琴與鋼琴的錄音所製作的評估資料集，
+一共有16首音檔。
+
+\subsection{音源分離結果比較}
+列出與Open-UMX的模型訓練出來的結果比較
+使用cSDR標準
+\cref{table:table-N250-music-source-separation}
+\cref{table:table-N2000-music-source-separation}
+
+\begin{table}[h]
+    \centering
+    \caption{N=250模型SDR結果比較}
+    \label{table:table-N250-music-source-separation}
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        \multicolumn{1}{|c|}{分離目標樂器} & \multicolumn{1}{|c|}{模型} & \multicolumn{1}{|c|}{前處理方法} & \multicolumn{1}{|c|}{SDR}\\
+        \hline
+        \multirow{7}*{Violin} & \multirow{5}*{Aug4mss(paper)} & Random-mixing & 1.08 \\
+        ~ & ~ & Wet & 0.73 \\
+        ~ & ~ & Chroma & 1.54 \\
+        ~ & ~ & Correlation & 1.56 \\
+        ~ & ~ & NonSilence & 1.27 \\
+        \cline{2-4}
+        ~ & Aug4mss(retrain) & Random-mixing & 2.05 \\
+        ~ & \textbf{Band-Split RNN} & \textbf{Random-mixing} & \textbf{11.458} \\
+        \hline
+        \multirow{7}*{Piano} & \multirow{5}*{Aug4mss(paper)} & Random-mixing & 7.43 \\
+        ~ & ~ & Wet & 8.48 \\
+        ~ & ~ & Chroma & 7.47 \\
+        ~ & ~ & Correlation & 9.66 \\
+        ~ & ~ & NonSilence & 8.76 \\
+        \cline{2-4}
+        ~ & Aug4mss(retrain) & Random-mixing & 10.95 \\
+        ~ & \textbf{Band-Split RNN} & \textbf{Random-mixing} & \textbf{15.619} \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \caption{N=2000模型SDR結果比較}
+    \label{table:table-N2000-music-source-separation}
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        \multicolumn{1}{|c|}{分離目標樂器} & \multicolumn{1}{|c|}{模型} & \multicolumn{1}{|c|}{前處理方法} & \multicolumn{1}{|c|}{SDR}\\
+        \hline
+        \multirow{7}*{Violin} & \multirow{5}*{Aug4mss(paper)} & Random-mixing & 3.84 \\
+        ~ & ~ & Wet & 4.48 \\
+        ~ & ~ & Chroma & 3.82 \\
+        ~ & ~ & Correlation & 4.19 \\
+        ~ & ~ & NonSilence & 3.03 \\
+        \cline{2-4}
+        ~ & Aug4mss(retrain) & Random-mixing & 5.811 \\
+        ~ & \textbf{Band-Split RNN} & \textbf{Random-mixing} & \textbf{12.136} \\
+        \hline
+        \multirow{7}*{Piano} & \multirow{5}*{Aug4mss(paper)} & Random-mixing & 13.46 \\
+        ~ & ~ & Wet & 11.76 \\
+        ~ & ~ & Chroma & 12.52 \\
+        ~ & ~ & Correlation & 11.37 \\
+        ~ & ~ & NonSilence & 12.82 \\
+        \cline{2-4}
+        ~ & Aug4mss(retrain) & Random-mixing & 13.514 \\
+        ~ & \textbf{Band-Split RNN} & \textbf{Random-mixing} & \textbf{16.358} \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\subsection{頻帶切割對於分離結果的影響}
+
+\pagebreak
+
+\section{音樂追蹤評估}
+
+\subsection{不同速度下的追蹤結果}
+\subsection{使用音源分離之音訊做為參考的追蹤結果}
+\subsection{不同系統參數設定下的追蹤結果}
+
+\pagebreak
+
+\end{document}

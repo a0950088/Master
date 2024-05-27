@@ -1,0 +1,74 @@
+\documentclass[class=NCU_thesis, crop=false]{standalone}
+
+\begin{document}
+\chapter{自動填單}
+這裡試著幫各位自動填入部份資訊，其餘打勾、日期請手寫。有字體大小不符、位置歪掉等問題的話，請修改 appendix\_letter\_NCU.tex後直接編譯生成文件。
+
+appendix\_letter\_NCU.tex中，每個句子（文字項目）都是獨立的大小與位置。 大小可由\textbackslash{}fs，調整。
+\footnote{\textbackslash{}fs 使用 \textbackslash{}fontsize 做無級調整，並固定單行高度。 }
+位置可由\textbackslash{}placetextbox 調整。語法如下：
+\begin{lstlisting}[style=LatexStyle,caption={}]
+\placetextbox{x(mm)}{y(mm)}
+\end{lstlisting}
+單位使用mm ，(0,0)位於左下角。建議調整時將``colorgrid''加入documentclass選項。（加入子檔的即可）
+\begin{lstlisting}[style=LatexStyle,caption={}]
+\documentclass[class=NCU_thesis, crop=false, colorgrid]{standalone}
+\end{lstlisting}
+colorgrid 將顯示格線（一小格是\SI{5}{\milli\metre}）。
+
+\begin{center}
+{ \noindent\color{red}\bfseries\Large NCU English letters in the NCU\_en}
+\end{center}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% define \mprof 
+\ExplSyntaxOn
+    % Copy prof. list from config.tex
+    \clist_gclear_new:N \g_sppmg_profs_cl
+    \clist_gset:NV \g_sppmg_profs_cl \profs
+    \clist_gpop:NNTF \g_sppmg_profs_cl \l_tmpa_tl {}{ \tl_clear:N \l_tmpa_tl}
+    \cs_gset_eq:NN \mprof \l_tmpa_tl
+\ExplSyntaxOff
+
+\cleardoublepage
+\pagestyle{empty}
+\sffamily
+% ------------------------------
+
+% % 碩博士論文電子檔授權書
+\IfFileExists{\letterAuthEl}{
+\cleardoublepage\thispagestyle{empty}
+\includepdf[pagecommand={   \placetextbox{100}{120}{\fs{17}\title}%
+                            \placetextbox{95}{109}{\fs{17}\mprof}%
+                            \placetextbox{69}{98}{\fs{17}\deptshort} }]%
+{\letterAuthEl}}{}
+
+% 碩博士紙本論文延後公開/下架申請書。(如需延後公開者,才需要裝訂於論文內頁)
+\IfFileExists{\letterPubReq}{
+\cleardoublepage\thispagestyle{empty}
+\includepdf[pagecommand={   \placetextbox{128}{270}{\fs{17}\author}%
+                            \placetextbox{70}{258}{\fs{17}\deptshort}%
+                            \placetextbox{100}{233}{\fs{17}\title}%
+                            \placetextbox{90}{219.3}{\fs{17}\mprof} }]%
+{\letterPubReq}}{}
+
+% 指導教授推薦書
+\IfFileExists{\letterRecom}{
+\cleardoublepage\thispagestyle{empty}
+\includepdf[pagecommand={   \placetextbox{50}{159}{\fs{22}\deptshort}%
+                            \placetextbox{118}{159}{\fs{22}\author}%
+                            \placetextbox{105}{144}{\fs{22}\title}}%
+]{\letterRecom}}{}
+
+% 口試委員審定書
+\IfFileExists{\letterVerif}{
+\cleardoublepage\thispagestyle{empty}
+\includepdf[pagecommand={   \placetextbox{63}{200.5}{\fs{22}\deptshort}%
+                            \placetextbox{145}{200.5}{\fs{22}\author}%
+                            \placetextbox{100}{170}{\fs{22}\title}}%
+]{\letterVerif}}{}
+
+% ------------------------------
+\pagestyle{fancy}
+\end{document}

@@ -1,0 +1,130 @@
+\documentclass[class=NCU_thesis, crop=false]{standalone}
+\begin{document}
+
+\chapter{研究方法}
+
+\section{系統架構}
+\fig[1][fig:fig-system-structure-overview][!hbt]{fig-system-structure-overview.png}
+[系統架構圖][系統架構圖]
+
+\cref{fig:fig-system-structure-overview} (A)
+為本系統的整體架構，此系統可分為離線處理與線上處理兩個階段，
+離線處理階段會將混合音源分離成參考音訊與伴奏音訊作為線上處理階段的資料，
+線上處理階段接收演奏者的即時音訊，並結合參考音訊來計算目前伴奏音訊的輸出位置並播放。
+請注意本研究將小提琴與鋼琴之混合音訊作為主要資料，
+並專注在當演奏者樂器為小提琴或鋼琴的狀況下使用本系統。
+
+\cref{fig:fig-system-structure-overview} (B)
+為音源分離模組的細部架構，
+此模組包含了參考音訊(小提琴音訊)的分離模型與伴奏音訊(鋼琴)的分離模型，
+採用深度學習模型Band-Split RNN{\colorbox{yellow}{reference}}將混合音訊中的目標音源分離出來，
+最後若有適合的MIDI資訊，我們會對輸出做一些後處理使音訊更乾淨。
+關於模型的訓練與調整、後處理的作法會在3.2節做討論。
+
+\cref{fig:fig-system-structure-overview} (C)
+為音樂追蹤模組的細部架構，
+此模組使用Python 3.9開發，
+我們使用multiprocessing package{\colorbox{yellow}{reference}}實現平行化處理，
+串流音訊使用pyaudio package{\colorbox{yellow}{reference}}接收處理，
+達到即時伴奏的效果。
+此模組包含四個元件，
+分別為Data Manager、Music Detector、Rough Position Estimator與Decision Maker。
+Data Manager管理所有音訊的資料與特徵、
+Music Detector即時偵測音樂是否開始、
+Rough Position Estimator粗略估計可能的伴奏時間位置，提供Decision Maker更多選擇、
+Decision Maker決定最後的輸出位置，
+關於元件詳細的設計與改動會在3.3節做討論。
+
+\pagebreak
+
+\section{音源分離模組}
+說明介紹順序
+
+\subsection{Band-split RNN}
+介紹Band-Split RNN模型，內部架構等等
+
+\subsection{資料前處理：頻帶切割的選擇}
+說明小提琴與鋼琴的頻率域的不同，因此選擇切割的頻帶範圍不同
+
+\subsection{資料後處理：使用MIDI資訊濾除雜訊}
+
+\pagebreak
+
+\section{音樂追蹤模組}
+此模組的實現是參考{\colorbox{yellow}{reference}}的real-time music tracker，
+本節將分成兩個部分說明，
+3.3.1節至3.3.3節會介紹實現音樂追蹤模組的核心方法，
+3.3.4節至3.3.7節會介紹每個元件的設計與改良。
+
+\subsection{Dynamic Time Warping Algorithm}
+動態時間規整演算法(DTW)~\cite{Senin2008Dynamic}，
+是一種用來計算兩個時間序列資料之間相似度的方法。
+給定兩個時間序列
+$X = (x_1, x_2, \dots x_N), N \in \mathbb{N}$和
+$Y = (y_1, y_2, \dots y_M), M \in \mathbb{M}$，
+其中N和M為兩個時間序列的長度，
+$x_N$和$y_M$是任兩個具有時間順序且形狀相似的資料，例如語音、音樂等等，
+如圖{\colorbox{yellow}{放X和Y的例子}}所示。
+可以看到雖然在{\color{red}{t=圖上時間點}}時，兩個資料點的距離較大，
+但若將此點的時間放到{\color{red}{t=圖上時間點}}上，計算出來的距離就會比較小，
+達到更好的對齊。
+考慮到時間序列的長度不一定相等的情況，例如不同人演奏同一個音符可能會有不同的速度差異，
+因此DTW通常採用動態規劃的方法來計算相似度。
+
+首先使用歐基里德距離方法計算X與Y所有時間點的距離，
+建立距離矩陣$C \in \mathbb{R}^{N \times M}$，
+{\colorbox{yellow}{解釋DTW的三個限制: 邊界限制、連續性、單調性}}
+
+% 此時若使用一般的歐基里德距離方法計算同一時間點的距離，
+% 無法正確地得知兩個時間序列的相似度。
+% 事實上是同一顆音符，只是演奏的時間點不同，也就是在時間軸上這兩段序列並不是對齊的，
+% 因此DTW演算法透過dynamic programming的方式動態對齊兩段時間序列，
+
+% 首先對兩段序列的每個時間點計算歐基里德距離建立距離矩陣，
+% 計算完畢會得到大小N*M的距離矩陣，矩陣中每格數值為兩個時間點資料的距離，
+% 而DTW有邊界限制，開始與結尾的順序是不可改變的，因此對齊路徑的開頭一定是(0, 0)，
+% 結尾必為(n, m)。因此
+
+
+放圖：兩個特徵序列例子、cost matrix + warping path
+介紹DTW演算法、
+說明使用librosa package的DTW
+
+\subsection{Online Dynamic Time Warping Algorithm}
+介紹ODTW演算法、
+最早提出的作者、
+解釋不同的更動、
+
+\subsection{Greedy Backward Alignment Method}
+解釋為何需要、
+從候選位置中挑選最好的path、
+說明參數的設定
+
+\subsection{Data Manager 音訊的特徵擷取}
+說明非串流音訊與串流音訊的特徵擷取方法、
+放圖
+
+\subsection{Music Detector Block}
+說明計算平均振幅判斷靜音片段、
+使用DTW計算對齊成本、
+兩個threshold的設置、
+放圖
+
+\subsection{Rough Estimator Block}
+使用低解析度特徵、
+如何計算cost matrix、
+Greedy的設置與做法、
+決定輸出的機制、
+放圖
+
+\subsection{Decision Maker Block}
+使用高解析度特徵、
+cost matrix的計算
+清楚解釋ODTW main thread、
+清楚解釋Greedy threads、
+清楚解釋輸出的轉換
+放圖
+
+\pagebreak
+
+\end{document}

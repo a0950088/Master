@@ -3,7 +3,29 @@
 
 \chapter{Abstract}
 
-Abstract
+This study aims to develop a violin performance tracking system 
+incorporating a source separation model to achieve mixed source separation 
+of violin and piano, 
+and to utilize the separated sources for music tracking under different features.
+
+We designed a source separation module and a music tracking module. 
+For the source separation module, 
+we collected and established a new public integrated dataset to train the Band-Split RNN model, 
+and improved the model's band-split method. 
+In model evaluation, we used Signal-to-Distortion Ratio (SDR) 
+to measure the separation performance.
+The results show that the model outperforms existing baseline models 
+in both data-limit and data-rich cases, 
+demonstrating the effectiveness of the band-split method.
+
+For the music tracking module, 
+we improved the Online Dynamic Time Warping algorithm (ODTW) and 
+the Greedy Backward Alignment method(GBA), 
+reimplementing the design of the real-time music tracking module and 
+enhancing some blocks. 
+In practical tests, the real-time music tracking system exhibited 
+low latency and accurate tracking performance, 
+maintaining stable tracking effects under different features.
 
 \vspace{2em}
 \noindent \textbf{Keywords:} \keywordsEn{} % Set keywords in config.tex

@@ -75,7 +75,7 @@ Bach Violin Dataset為整合了高品質公開錄音的巴赫小提琴獨奏奏�
 此資料集是從公開資料集MedleyDB~\cite{Bittner2014MedleyDB}中特別
 挑選出小提琴與鋼琴的錄音所製作的測試資料集。
 
-\colorbox{yellow}{放資料集的連結?}
+% \colorbox{yellow}{放資料集的連結?}
 
 \subsection{模型訓練細節} \label{training-dataset-processing}
 為了公平起見，我們使用自己的公開資料集重新訓練Aug4mss模型來評估效能，
@@ -487,7 +487,7 @@ $| \Delta t\vert $為現場伴奏音訊的延遲。
     \label{fig:fig-ch4-accelerate-tracking-results}
 \end{figure}
 
-上述結果的音訊檔案可從{\colorbox{yellow}{github}}聆聽。
+上述使用的MIDI檔案與結果音檔可從此連結~\cite{YuJieLin2024MidiTrackingResults}查看聆聽。
 
 % cost matrix對齊圖
 % 放MIDI隨機生成速度的那些評估圖
@@ -497,7 +497,7 @@ $| \Delta t\vert $為現場伴奏音訊的延遲。
 我們使用與\ref{ch4-subst-midi-tracking-results}節相同的曲子，
 在網路上找到由kopikostar演奏的小提琴與鋼琴合奏版本\cite{kopikostar2024Beethoven}，
 並對此混合音訊做音源分離，將分離結果作為參考音訊與伴奏音訊。
-分離結果的音檔可至此連結聆聽{\colorbox{yellow}{github}}。
+分離結果的音檔可至此連結聆聽~\cite{YuJieLin2024MusicSourceSeparation}。
 
 我們實際演奏現場音訊，並演奏了四種不同速度，分別為110bpm、120bpm、130bpm與140bpm，
 此四種速度為這首曲子最常出現的演奏速度。
@@ -665,6 +665,8 @@ RPE估計出的位置也因為兩個音訊的特徵不夠相近，使粗略估�
 
 % \subsection{不同系統參數設定下的追蹤結果}
 % 需測試
+
+上述的結果音檔可從此連結~\cite{YuJieLin2024DiffFeatureTrackingResults}查看聆聽。
 
 \pagebreak
 

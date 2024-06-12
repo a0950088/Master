@@ -6,13 +6,13 @@ import os
 path = "./piano_accompaniment/"
 all_file_name = os.listdir(path)
 playlist_url = 'https://youtube.com/playlist?list=PLVzcEcYVk_Bu-az-UE9YCoVFsfgq3idku&si=t8iMh7ID1hyDZy3z'
-single_url = 'https://www.youtube.com/watch?v=26A-GRmXMTU'
+single_url = 'https://www.youtube.com/watch?v=XwiNJxxO0II'
 def DownloadSingleYtSource(url):
     yt = YouTube(url)
     file_name = (yt.title).replace('/',' ').replace('"',' ')
     try:
         yt.streams.filter().get_audio_only().download(filename=f'url.mp3')
-        subprocess.call(['ffmpeg', '-i', f'url.mp3', f'summer3rd.wav'])
+        subprocess.call(['ffmpeg', '-i', f'url.mp3', f'ok.wav'])
         print("Done")
     except:
         print(f"try again ...")

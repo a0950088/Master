@@ -1,0 +1,17 @@
+# frame reader
+SAMPLE_RATE = 44100
+WINDOW_SIZE = int(0.046*SAMPLE_RATE)
+HOP_SIZE = int(0.020*SAMPLE_RATE) # 20ms
+FRAME_SIZE = 84 # freq band
+
+STFT = {
+    'nfft': WINDOW_SIZE,
+    'hop': HOP_SIZE,
+    'window': WINDOW_SIZE
+}
+
+# odtw
+SEARCH_WINDOW = int(9*SAMPLE_RATE/HOP_SIZE)
+MAX_RUN = 3
+DIAG_COST_FACTOR = 1
+SECS_TO_TICKS = 1 * 1000 * 1000 * 10

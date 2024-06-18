@@ -3,6 +3,18 @@
 
 \chapter{Abstract}
 
+The violin has long been a popular instrument for learning and performance, 
+with many well-known pieces and distinguished violinists. 
+Among these pieces, the majority are ensemble works involving the violin and other instruments, 
+requiring collaboration to fully present the piece's essence. 
+However, due to time or cost constraints, 
+finding long-term ensemble partners (accompanists) is not always feasible. 
+Thus, this study aims to develop a system specifically 
+for the common violin and piano ensemble. 
+This system can separate the mixed audio source of the violin and piano, 
+track the violin's performance using the separated audio, 
+and output the piano accompaniment.
+
 This study aims to develop a violin performance tracking system 
 incorporating a source separation model to achieve mixed source separation 
 of violin and piano, 
@@ -12,7 +24,7 @@ We designed a source separation module and a music tracking module.
 For the source separation module, 
 we collected and established a new public integrated dataset to train the Band-Split RNN model, 
 and improved the model's band-split method. 
-In model evaluation, we used Signal-to-Noise Ratio 
+In model evaluation, we used the Signal-to-Noise Ratio 
 to measure the separation performance.
 The results show that the model outperforms existing baseline models 
 in both data-limit and data-rich cases, 

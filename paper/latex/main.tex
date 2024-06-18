@@ -50,18 +50,18 @@
         \input{chapters/acknowledgements.tex} % 誌謝(可略)
 
         % 論文相似度比對報告電子回條
-        %\IfFileExists{\letterThesisSim}{
-        %    \cleardoublepage
-        %    \includepdf{\letterThesisSim}}{}
+        \IfFileExists{\letterThesisSim}{
+           \cleardoublepage
+           \includepdf{\letterThesisSim}}{}
         % 學術倫理修課證明
         \IfFileExists{\letterCareCert}{
            \cleardoublepage
            \includepdf{\letterCareCert}}{}
         % 遠距口試申請
-        %\IfFileExists{\letterRemoteExam}{
-        %    \cleardoublepage
-        %    \includepdf{\letterRemoteExam}}{}
-
+        \IfFileExists{\letterRemoteExam}{
+           \cleardoublepage
+           \includepdf{\letterRemoteExam}}{}
+    
         % 原始 book class 不將 TOC,LOF,LOT 加入目錄列表，須手動加
         % 此樣板可由 config.tex 切換是否自動加入目錄
         \tableofcontents        % 目錄

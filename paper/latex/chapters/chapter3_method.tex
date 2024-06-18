@@ -13,12 +13,12 @@
 線上處理階段接收演奏者的即時串流音訊，並結合參考音訊來計算目前演奏者的樂曲位置，
 並根據樂曲位置輸出對應的伴奏音訊。
 請注意本研究將小提琴與鋼琴之混合音訊作為主要資料，
-並專注在當演奏者樂器為小提琴或鋼琴的狀況下來使用本系統。
+並專注在當演奏者樂器為小提琴或鋼琴的情況下來使用本系統。
 
 \cref{fig:fig-ch3-system-structure-overview} (B)
 為音源分離模組的細部架構，
 採用深度學習模型將混合音訊中的目標音源分離出來。
-此模組包含了小提琴（參考音訊）音源分離模型與鋼琴（伴奏音訊）音源分離模型，
+此模組包含了小提琴(參考音訊)音源分離模型與鋼琴(伴奏音訊)音源分離模型，
 另外在訓練階段，本研究設計了一種簡單的頻帶切割估計方法提升模型的分離效果。
 關於模型架構、頻帶切割估計方法會在\ref{ch3-st-mss-module}節做討論。
 
@@ -27,7 +27,7 @@
 此模組使用Python 3.9開發，
 我們使用multiprocessing package~\cite{python2024multiprocessing}實現平行化處理，
 串流音訊使用pyaudio package~\cite{python2024pyaudio}接收處理，
-達到即時伴奏的效果。
+達到即時追蹤與伴奏的效果。
 此模組包含四個元件，
 分別為資料管理者(Data Manager)、音樂偵測器(Music Detector)、
 粗略位置估計器(Rough Position Estimator)與決策決定者(Decision Maker)。
@@ -49,7 +49,7 @@ BSRNN將輸入的頻譜圖$X\in \mathbb{C} ^{F\times T}$
 拆分成一個個的子帶頻譜圖$B = (B_1, B_2, \dots B_K), B_K \in \mathbb{C}^{G_K\times T}$，
 每個不同大小的子帶頻譜圖經過處理後變為一系列具有相同維度的特徵$Z\in \mathbb{R}^{N\times K\times T}$，
 接著利用RNN層將頻帶與序列的資訊交錯建模得到輸出$Q\in \mathbb{R}^{N\times K\times T}$，
-最後每個子帶特徵由多層感知器(Multilayer Perceptron, MLP)產生對應的複值時頻遮罩$M\in \mathbb{C}^{F\times T}$，
+最後每個子帶特徵由MLP產生對應的複值時頻遮罩$M\in \mathbb{C}^{F\times T}$，
 並將遮罩用於輸入的混合頻譜圖來產生估計的目標源頻譜圖$S\in \mathbb{C}^{F\times T}$。
 整體架構如\cref{fig:fig-ch3-BSRNN-model-structure}所示。
 
@@ -61,9 +61,12 @@ BSRNN將輸入的頻譜圖$X\in \mathbb{C} ^{F\times T}$
 此模組可根據目標音源的聲音特性來設計不同的頻帶切割範圍，
 例如當目標音源的聲音特性都集中在較低頻的地方時，我們可以將低頻切割得更細，
 高頻切割的寬一點，使模型在訓練時可以看到更重要的頻域特徵。
+在~\cite{Luo_Yi2022MusicSourceSeparation}中頻帶切割的位置為事先透過專家或先驗知識定義好的。
+為了更方便估計不同樂器的頻帶切割範圍，我們在\cref{ch3-subst-estimate-band-split-point}
+提出頻帶切割估計方法。
 
 \subsection{頻帶切割估計方法} \label{ch3-subst-estimate-band-split-point}
-為了使頻帶切割模組(\cref{fig:fig-ch3-BSRNN-model-structure} (B))發揮更好的效果，
+為了使Band-Split RNN中的頻帶切割模組發揮更好的效果，
 我們使用簡單的頻帶切割估計方法來估計小提琴與鋼琴的頻帶切割點，
 此方法不需要依賴先驗知識或專家知識的幫助，而是透過同一種樂器的音訊資料來估計頻帶切割點。
 首先我們對每種樂器選取約15分鐘的的音訊資料，這些資料並不會加入模型的訓練。
@@ -71,9 +74,11 @@ BSRNN將輸入的頻譜圖$X\in \mathbb{C} ^{F\times T}$
 最小頻率切割值$f_{min}=100$Hz、取樣率$sr = 44100$Hz
 與初始頻帶陣列$F_{band} \in \frac{sr}{2} $，
 本研究之兩種樂器的切割比例閥值為$r_{violin}=0.013$, $r_{piano}=0.0035$，
-此數值是根據計算出來的切割頻帶數量去做調整。
+此數值是根據計算出來的切割頻帶數量去做調整，
+切割比例閥值與最小頻率切割值皆可根據硬體的算力做調整。
 
-對於每筆資料，使用快速傅立葉轉換(Fast Fourier Transform, FFT)計算頻率域的每個樣本得到的振幅與對應到的頻率，
+對於每筆資料，使用快速傅立葉轉換(Fast Fourier Transform, FFT)
+計算頻率域的每個樣本得到的振幅與對應到的頻率，
 由於FFT的對稱性，我們只需要迭帶一半的樣本數，並將振幅值累加到對應的$F_{band}$。
 累加振幅值越高代表此頻率的重要程度越高，如\cref{fig:fig-ch3-bandwidth-estimate}所示。
 \begin{figure}[H]
@@ -221,9 +226,9 @@ $(i,j) \in W$代表兩段序列在$x_i$與$y_j$點上對齊。
 在~\cite{dixon2005ODTW}中，每次迭帶時在$(i, j)$方向計算的格數皆為$c$個，
 我們將每次迭帶在j方向計算的cell個數改為$2c-1$，
 如範例\cref{fig:fig-ch3-odtw-search-range-compute-comparision}所示。
-\begin{figure}[!hbt]
+\begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\linewidth]{ch3/fig-odtw-search-range-compute-comparision.png}
+    \includegraphics[width=0.7\linewidth]{ch3/fig-odtw-search-range-compute-comparision.png}
     \caption{每個迭帶所計算到的距離成本矩陣格數位置比較}
     \label{fig:fig-ch3-odtw-search-range-compute-comparision}
 \end{figure}
@@ -232,17 +237,18 @@ $(i,j) \in W$代表兩段序列在$x_i$與$y_j$點上對齊。
 而串流音訊並不會出現相同的時間點(輸出永遠為嚴格單調遞增)，
 且我們無法得知目前現場音訊的快慢，
 因此為了能讓最後輸出對齊位置時有更多的選擇，
-我們除了向前計算，也向後計算參考音訊的距離成本。
+我們除了向前計算$(j-c \quad \text{to} \quad j)$，
+也向後計算$(j \quad \text{to} \quad j+c)$參考音訊的距離成本。
 
 在計算完目前$(i, j)$的距離成本矩陣後，
-我們需要決定下一步的$(i_{next}, j_{next})$走向以增加新的距離成本到兩個矩陣中。
+我們需要決定下一步的走向$(i_{next}, j_{next})$以增加新的距離成本到兩個矩陣中。
 由於我們將$i$設定為嚴格單調遞增，因此在決定增量對齊的方向時，
 只會有$(i+1, j+1)$與$(i+1, j)$兩種方向。
 除非在同一個方向增加超過事先設置的參數$ODTW_{Max\_Run} = 3$，
 否則我們每次都會計算$(i+1, j+1)$方向。
 另外當目前的$i < c$時，為了使搜索範圍內的格數有計算到完整的距離成本，
 即使$output_j \neq j$，在下一個迭帶我們還是計算點$(i+1, j+1)$，
-直到$i >= c$時才會將$j$設為$output_j$。
+直到$i >= c$時才會將$j$更新為$output_j$。
 
 在每次計算完最新的$D_{total}$與$D_{cell}$後，
 我們使用這兩個成本矩陣計算時間點$i$的對齊位置$output_j$，
@@ -253,7 +259,7 @@ $L_{lower} = (j-1)$，分別代表尋找$output_j$的上下限，
 $(i, curr_{j})$即為ODTW的輸出對齊點。
 
 \subsection{貪心向後對齊(Greedy Backward Alignment, GBA)} \label{ch3-subst-GBA}
-由於ODTW在對齊時為增量對齊，並不像DTW一樣在計算完兩段音訊的成本矩陣後才回溯最佳對齊路徑，
+由於ODTW在對齊時為增量對齊，並不像DTW一樣在計算完兩段音訊的距離成本矩陣後才回溯最佳對齊路徑，
 因此通常ODTW的輸出結果會比DTW的輸出結果來的更不穩定。
 為了改善上述問題，我們參考~\cite{Arzt2010Towards}中的Greedy Local Search演算法
 來設計此方法，此方法配合多執行續的執行可以快速的計算目前位置的向後對齊成本。
@@ -293,7 +299,7 @@ $(i, curr_{j})$即為ODTW的輸出對齊點。
 在線上處理階段啟動前與啟動後，
 我們對非串流音訊(參考音訊、伴奏音訊)與串流音訊(現場音訊)
 擷取兩種特徵作為其他元件的輸入資料，
-分別為高解析度特徵與低解析度特徵，高解析度特徵為梅爾頻譜特徵，
+分別為高解析度特徵與低解析度特徵，高解析度特徵為梅爾頻譜特徵(Mel Spectrogram)，
 低解析度特徵為高解析度特徵對時間軸卷積後的重新採樣。
 為了管理音訊特徵的處理與傳送，
 我們設計了資料管理者來集中管理音樂追蹤模組中所有用到的音訊特徵。
@@ -321,7 +327,7 @@ STFT的參數設定如\cref{table:table-stft-parameter-setting}所示。
 \end{table}
 
 為了使特徵更接近人類的聽覺系統，
-我們對STFT頻譜圖做梅爾頻譜(Mel Spectrogram)分析，得到高解析度特徵。
+我們對STFT頻譜圖做梅爾頻譜分析，得到高解析度特徵。
 梅爾頻譜是根據人耳對聲音的敏感度所設計的一種時頻分析方式，
 而梅爾頻譜就是由梅爾濾波器組(Mel Filter Bank)與STFT頻譜圖矩陣相乘後得到的結果，
 梅爾頻譜圖的參數設定如下\cref{table:table-high-resolution-feature-parameter-setting}所示，

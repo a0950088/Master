@@ -5,31 +5,26 @@
 
 The violin has long been a popular instrument for learning and performance, 
 with many well-known pieces and distinguished violinists. 
-Among these pieces, the majority are ensemble works involving the violin and other instruments, 
-requiring collaboration to fully present the piece's essence. 
+Among these pieces, ensemble compositions involving the violin and other instruments are predominant, 
+requiring collaboration with other instrumentalists to fully present the musical piece.
 However, due to time or cost constraints, 
-finding long-term ensemble partners (accompanists) is not always feasible. 
-Thus, this study aims to develop a system specifically 
-for the common violin and piano ensemble. 
-This system can separate the mixed audio source of the violin and piano, 
+finding long-term ensemble partners (accompanists) can be challenging due to time or cost constraints.
+Therefore, this research focuses on developing a system for the common violin and piano ensemble. 
+This system can separate the violin and piano sources from a mixed audio source,
 track the violin's performance using the separated audio, 
 and output the piano accompaniment.
 
-This study aims to develop a violin performance tracking system 
-incorporating a source separation model to achieve mixed source separation 
-of violin and piano, 
-and to utilize the separated sources for music tracking under different features.
-
+The goal of this research is to develop a real-time music tracking system 
+that utilizes source separation results to track violin performances.
 We designed a source separation module and a music tracking module. 
 For the source separation module, 
-we collected and established a new public integrated dataset to train the Band-Split RNN model, 
-and improved the model's band-split method. 
-In model evaluation, we used the Signal-to-Noise Ratio 
+we collected and established a new open integrated dataset to train the Band-Split RNN model, 
+improving the model's band-split method. 
+We evaluated the model using the Signal-to-Distortion Ratio 
 to measure the separation performance.
 The results show that the model outperforms existing baseline models 
 in both data-limit and data-rich cases, 
 demonstrating the effectiveness of the band-split method.
-
 For the music tracking module, 
 we improved the Online Dynamic Time Warping algorithm and 
 the Greedy Backward Alignment method, 
@@ -37,7 +32,8 @@ reimplementing the design of the real-time music tracking module and
 enhancing some blocks. 
 In practical tests, the real-time music tracking system exhibited 
 low latency and accurate tracking performance, 
-maintaining stable tracking effects under different features.
+maintaining stable tracking results comparable to offline tracking 
+across different feature tracking performances.
 
 \vspace{2em}
 \noindent \textbf{Keywords:} \keywordsEn{} % Set keywords in config.tex

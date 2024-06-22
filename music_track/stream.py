@@ -1,11 +1,11 @@
 import librosa
 import numpy as np
-import cfg
+# import cfg
 from collections import defaultdict
 # import pyaudio
 import time
 from multiprocessing.managers import BaseManager
-from cfg import CHANNEL, STREAM_BUFFER, SAMPLE_RATE
+from config import CHANNEL, STREAM_BUFFER, SAMPLE_RATE
 import collections
 from pydub import AudioSegment
 
@@ -18,7 +18,7 @@ INPUT_DEVICE_KEYWORD = '麥克風'
 OUTPUT_DEVICE_KEYWORD = 'Realtek' # 'Focusrite USB Audio'
 
 class Stream:
-    def __init__(self, mode, queue, acc=None, output_queue=None, test_data=None) -> None:
+    def __init__(self, mode, live_queue, output_queue=None, test_data=None) -> None:
         self.pa = PyAudio()
         # self.test_data = None
         # self.live_queue = live_q # input queue
@@ -28,9 +28,9 @@ class Stream:
         
         self.iodevice = self.loadIODevice()
         if mode == 'test':
-            self.__initializeTestData(test_data, queue)
+            self.__initializeTestData(test_data, live_queue, output_queue)
         else:
-            self.__initializeLiveData(queue, acc, output_queue)
+            self.__initializeLiveData(live_queue, output_queue)
         log.info("Data initialization completed")
         # self.stream = self.pa.open(format = paFloat32,
         #                         #    channels=cfg.CHANNEL,
@@ -97,18 +97,17 @@ class Stream:
             flag (_type_): _description_
         """
         livedata = np.frombuffer(livedata, dtype=np.float32)
+        self.live_record = np.concatenate((self.live_record, livedata))
         self.live_queue.put((livedata, len(livedata)))
-        if len(self.acc_queue) == 0:
-            self.acc_data = np.zeros(frame_count, dtype=np.float32)
-            return (self.acc_data, paContinue)
-        else:
-            acc_position = self.acc_queue.peek_last()
-            if acc_position is None:
-                self.live_queue.put(None)
+        if len(self.output_queue) > 0:
+            output_segment = self.output_queue.popleft()
+            self.output_record = np.concatenate((self.output_record, output_segment))
+            if output_segment is None:
                 return (b'', paComplete)
-            else:
-                # return acc
-                pass
+            return (output_segment, paContinue)
+        else:
+            self.output_record = np.concatenate((self.output_record, self.mute_data))
+            return (self.mute_data, paContinue)
     
     def __callback(self, livedata, frame_count, time_info, flag):
         """Use test data to tracking.
@@ -128,22 +127,34 @@ class Stream:
             self.live_queue.put((self.mute_data, len(self.mute_data)))
             return (b'', paComplete)
         else:
+            log.info(f"frame_count: {frame_count}")
             self.test_data = self.live[:frame_count]
             self.live_queue.put((self.test_data, len(self.test_data)))
             self.live = self.live[frame_count:]
-        self.live_record = np.concatenate((self.live_record, self.test_data))
-        return (self.mute_data, paContinue)
+            self.live_record = np.concatenate((self.live_record, self.test_data))
+            # return (self.mute_data, paContinue)
+            if len(self.output_queue) > 0:
+                output_segment = self.output_queue.popleft()
+                if output_segment is None:
+                    print("output_segment is None")
+                    return (b'', paComplete)
+                self.output_record = np.concatenate((self.output_record, output_segment))
+                return (output_segment, paContinue)
+            else:
+                self.output_record = np.concatenate((self.output_record, self.mute_data))
+                return (self.mute_data, paContinue)
     
-    def __initializeLiveData(self, queue, acc, output_queue):
+    def __initializeLiveData(self, live_queue, output_queue):
         """Initial real live tracking parameters
 
         Args:
             queue (_type_): _description_
         """
-        self.live_queue = queue
-        self.acc_queue = output_queue
-        self.acc = acc
-        self.live_record = np.zeros(STREAM_BUFFER, dtype=np.float32) # record online live
+        self.live_queue = live_queue
+        self.output_queue = output_queue
+        self.live_record = np.zeros(0, dtype=np.float32) # record online live
+        self.output_record = np.zeros(0, dtype=np.float32) # record online output
+        self.mute_data = np.zeros(STREAM_BUFFER, dtype=np.float32)
         self.stream = self.pa.open(format = paFloat32,
                                    channels=CHANNEL,
                                    input_device_index = self.iodevice[0],
@@ -155,7 +166,7 @@ class Stream:
                                    frames_per_buffer = STREAM_BUFFER)
         self.stream.stop_stream()
         
-    def __initializeTestData(self, test_live, queue):
+    def __initializeTestData(self, test_live, live_queue, output_queue):
         """Initial test data tracking parameters
 
         Args:
@@ -163,10 +174,12 @@ class Stream:
             queue (_type_): _description_
         """
         self.live = test_live # full test live
-        self.live_queue = queue
-        self.test_data = None
         self.frame, self.pre_frame = 0, 0
-        self.live_record = np.zeros(STREAM_BUFFER, dtype=np.float32) # record online live
+        self.test_data = None
+        self.live_queue = live_queue
+        self.output_queue = output_queue
+        self.live_record = np.zeros(0, dtype=np.float32) # record online live
+        self.output_record = np.zeros(0, dtype=np.float32) # record online output
         self.mute_data = np.zeros(STREAM_BUFFER, dtype=np.float32)
         self.stream = self.pa.open(format = paFloat32,
                                    channels=CHANNEL,
@@ -184,11 +197,6 @@ class Stream:
         """
         Start streaming
         """
-        # if is_live:
-        #     self.__initializeLiveData(queue)
-        # else:
-        #     self.__initializeTestData(test_data, queue)
-        
         self.stream.start_stream()
 
 if __name__ == '__main__':

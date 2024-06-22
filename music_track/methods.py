@@ -232,10 +232,12 @@ class ODTW:
             return DIR_IJ # both
         if self.run_count > cfg.MAX_RUN:
             if prev == DIR_I:
+                log.warning(f"return DIR_J!")
                 return DIR_J
             else:
+                log.warning(f"return DIR_I!")
                 return DIR_I
-        
+            
         # if i_prime < i:
         #     return DIR_I
         # elif j_prime < j:
@@ -252,9 +254,9 @@ class ODTW:
         i_prime = 0
         j_prime = 0
         # direction
-        curr = set()
-        prev = set()
-        self.acc_queue.append((i_prime*cfg.HOP_SIZE, j_prime*cfg.HOP_SIZE))
+        # curr = set()
+        # prev = set()
+        self.acc_queue.append((i_prime, j_prime))
         self.acc_path.append((i_prime, j_prime))
         self.output_points.append(j_prime)
         self.res_path_queue.put((i_prime, j_prime))
@@ -271,9 +273,6 @@ class ODTW:
         
         while True:
             # inner_time = time.time()
-            # if j == self.ref_len-1:
-            #     # end tracking
-            #     break
             # add live
             # if not self.live_queue.empty() or i>=self.live_feature_record.shape[0]-1:
             #     data = self.live_queue.get()
@@ -282,6 +281,10 @@ class ODTW:
             #     live_seg = data
             #     self.live_feature_record = np.concatenate((self.live_feature_record, live_seg), dtype=np.float32)
             #     logging.info(f"get new live {self.live_feature_record.shape}")
+            # if j >= self.ref_len-1 and j_prime >= self.ref_len-1:
+            #     # end tracking
+            #     log.info(f"Ref end !")
+            #     break
             try:
                 data = self.live_queue.get(timeout=1)
             except:
@@ -291,7 +294,7 @@ class ODTW:
             self.live_feature_record = np.concatenate((self.live_feature_record, live_seg), dtype=np.float32)
             log.info(f"get new live: {live_seg.shape} {self.live_feature_record.shape}")
             
-            curr = self.get_next_direction(i, j, i_prime, j_prime, prev)
+            # curr = self.get_next_direction(i, j, i_prime, j_prime, prev)
             i_prime+=1
             i+=1
             l_i = self.live_feature_record[i]
@@ -302,19 +305,26 @@ class ODTW:
                 self.setCostMatrix(i, J, d)
 
             # add ref  
-            if Direction.J in curr:
-                j+=1
-                r_j = self.ref_feature[min(j, self.ref_len-1)]
-                for I in range(max(0, i-cfg.ODTW_SEARCH_C+1), i+1):
-                    l_I = self.live_feature_record[I]
-                    d = self.calculateCost(l_I, r_j)
-                    self.setCostMatrix(I, j, d)
+            # if Direction.J in curr:
+            #     j+=1
+            #     r_j = self.ref_feature[min(j, self.ref_len-1)]
+            #     for I in range(max(0, i-cfg.ODTW_SEARCH_C+1), i+1):
+            #         l_I = self.live_feature_record[I]
+            #         d = self.calculateCost(l_I, r_j)
+            #         self.setCostMatrix(I, j, d)
+            # if Direction.J in curr:
+            j+=1
+            r_j = self.ref_feature[min(j, self.ref_len-1)]
+            for I in range(max(0, i-cfg.ODTW_SEARCH_C+1), i+1):
+                l_I = self.live_feature_record[I]
+                d = self.calculateCost(l_I, r_j)
+                self.setCostMatrix(I, j, d)
             
-            if curr == prev and prev != DIR_IJ:
-                self.run_count += 1
-            else:
-                self.run_count = 1
-            prev = curr
+            # if curr == prev and prev != DIR_IJ:
+            #     self.run_count += 1
+            # else:
+            #     self.run_count = 1
+            # prev = curr
             
             if self.rpe_reset:
                 j_prime = self.min_rpe_ret[1] if self.min_rpe_ret[1] is not None else j_prime
@@ -322,8 +332,8 @@ class ODTW:
                 # _, j_prime = self.get_ij_prime(i_prime, j_prime)
                 j = j_prime
                 
-                curr = set()
-                prev = set()
+                # curr = set()
+                # prev = set()
                 self.run_count = 1
                 self.rpe_reset = False
                 self.min_rpe_ret = (np.inf, None)
@@ -333,13 +343,16 @@ class ODTW:
                     _, j_prime = self.get_ij_prime(i_prime, j)
                 else:
                     _, j_prime = self.get_ij_prime(i_prime, j_prime)
+                    j = j_prime
             # if self.use_rpe == True:
             #     _, j_prime = self.get_ij_prime(i_prime, j_prime)
             # else:
             #     # search c
             #     _, j_prime = self.get_ij_prime(i_prime, j)
             log.info(f"odtw res: {i, j, i_prime, j_prime, self.totalCostMatrix[i_prime, j_prime]}")
-            self.acc_queue.append((i_prime*cfg.HOP_SIZE, j_prime*cfg.HOP_SIZE))
+            # self.acc_queue.append((i_prime*cfg.HOP_SIZE, j_prime*cfg.HOP_SIZE))
+            j_prime = self.ref_len-1 if j_prime >= self.ref_len else j_prime
+            self.acc_queue.append((i_prime, j_prime))
             self.acc_path.append((i_prime, j_prime))
             self.output_points.append(j_prime)
             self.res_path_queue.put((i_prime, j_prime))
@@ -370,7 +383,7 @@ class ODTW:
                 self.prev_j_prime[1] += 1 # max run
         else:
             self.prev_j_prime = [j_prime, 0]
-            
+                   
         return i_prime, j_prime
     
     def deals_thread(self, q, live_pos):
@@ -592,315 +605,3 @@ class ODTW:
         plt.savefig(f"{cfg.FOLDER}/DMA.png")
         # plt.show()
         
-class TestODTW:
-    def __init__(self, ref_feature, live_queue, acc_queue, res_path_queue):
-        self.ref_len = ref_feature.shape[0]
-        self.ref_feature = ref_feature
-        self.live_queue = live_queue
-        self.acc_queue = acc_queue # deque
-        self.res_path_queue = res_path_queue
-        
-        self.live_feature_record = np.zeros((0, cfg.FRAME_SIZE), dtype=np.float32)
-        self.totalCostMatrix = defaultdict(dict_inf)
-        self.cellCostMatrix = defaultdict(dict_inf)
-        # self.c = cfg.ODTW_SEARCH_C
-        self.run_count = 0
-        self.prev_j_prime = [0,0]
-        
-        self.min_rpe_ret = (np.inf, None)
-        self.rpe_reset = False
-        
-        # use to draw
-        self.acc_path = []
-        self.offline_path = []
-        self.others_rpe_points = []
-        self.rpe_points = []
-    
-    def setCostMatrix(self, i, j, d):
-        if (i, j) == (0, 0):
-            self.totalCostMatrix[i, j] = d
-        else:
-            self.totalCostMatrix[i, j] = min(
-                d+self.totalCostMatrix[i-1, j-1],
-                d+self.totalCostMatrix[i-1, j],
-                d+self.totalCostMatrix[i, j-1]
-            )
-        self.cellCostMatrix[i, j] = d
-    
-    def calculateCost(self, f1, f2):
-        return np.sum(np.abs(f1-f2)**2)**0.5
-    
-    def get_next_direction(self, i, j, i_prime, j_prime, prev):
-        if i < cfg.ODTW_SEARCH_C:
-            return DIR_IJ # both
-        if self.run_count > cfg.MAX_RUN:
-            if prev == DIR_I:
-                return DIR_J
-            else:
-                return DIR_I
-        
-        if i_prime < i:
-            return DIR_I
-        elif j_prime < j:
-            return DIR_J
-        else:
-            return DIR_IJ
-    
-    def run(self, music_tracker_event):
-        # i: live pos j: ref pos
-        i = 0
-        j = 0
-        # output position
-        i_prime = 0
-        j_prime = 0
-        # direction
-        curr = set()
-        prev = set()
-        self.acc_queue.append((i_prime*cfg.HOP_SIZE, j_prime*cfg.HOP_SIZE))
-        self.acc_path.append((i_prime, j_prime))
-        self.res_path_queue.put((i_prime, j_prime))
-        log.info(f"initial output acc ({i_prime}, {j_prime})")
-        
-        data = self.live_queue.get()
-
-        live_seg = data
-        self.live_feature_record = np.concatenate((self.live_feature_record, live_seg), dtype=np.float32)
-        l_i = self.live_feature_record[i]
-        r_j = self.ref_feature[j]
-        d = self.calculateCost(l_i, r_j)
-        self.setCostMatrix(i, j, d)
-        
-        while True:
-            if not self.live_queue.empty() or i == self.live_feature_record.shape[0]-1:
-                try:
-                    data = self.live_queue.get(timeout=1)
-                except:
-                    log.info(f"ODTW live queue time out !")
-                    break
-                # data = self.live_queue.get()
-                live_seg = data
-                self.live_feature_record = np.concatenate((self.live_feature_record, live_seg), dtype=np.float32)
-                log.info(f"get new live: {live_seg.shape} {self.live_feature_record.shape}")
-            
-            curr = self.get_next_direction(i, j, i_prime, j_prime, prev)
-            # i_prime+=1
-            # add live
-            if Direction.I in curr:
-                i+=1
-                l_i = self.live_feature_record[i]
-                # 計算+c/-c範圍的ref cost
-                for J in range(max(0, j-cfg.ODTW_SEARCH_C+1), j+1):
-                    r_J = self.ref_feature[J]
-                    d = self.calculateCost(l_i, r_J)
-                    self.setCostMatrix(i, J, d)
-
-            # add ref
-            if Direction.J in curr:
-                j+=1
-                r_j = self.ref_feature[min(j, self.ref_len-1)]
-                for I in range(max(0, i-cfg.ODTW_SEARCH_C+1), i+1):
-                    l_I = self.live_feature_record[I]
-                    d = self.calculateCost(l_I, r_j)
-                    self.setCostMatrix(I, j, d)
-            
-            if curr == prev and prev != DIR_IJ:
-                self.run_count += 1
-            else:
-                self.run_count = 1
-            prev = curr
-            
-            # if self.rpe_reset:
-            #     j_prime = self.min_rpe_ret[1] if self.min_rpe_ret[1] is not None else j_prime
-            #     j = j_prime
-            #     log.info(f"use rpe: {i_prime, j_prime}")
-                
-            #     curr = set()
-            #     prev = set()
-            #     self.run_count = 1
-            #     self.rpe_reset = False
-            #     self.min_rpe_ret = (np.inf, None)
-            # else:
-            #     # _, j_prime = self.get_ij_prime(i_prime, j_prime) # TODO: 確認合理性
-            #     i_prime, j_prime = self.get_ij_prime(i, j)
-            i_prime, j_prime = self.get_ij_prime(i, j)
-            # if self.use_rpe == True:
-            #     _, j_prime = self.get_ij_prime(i_prime, j_prime)
-            # else:
-            #     # search c
-            #     _, j_prime = self.get_ij_prime(i_prime, j)
-            log.info(f"odtw res: {i, j, i_prime, j_prime, self.totalCostMatrix[i_prime, j_prime]}")
-            self.acc_queue.append((i_prime*cfg.HOP_SIZE, j_prime*cfg.HOP_SIZE))
-            self.acc_path.append((i_prime, j_prime))
-            self.res_path_queue.put((i_prime, j_prime))
-        music_tracker_event.clear()
-        log.info(f"odtw end")
-        
-    def get_ij_prime(self, i, j):
-        i_prime, j_prime = (i, j)
-        min_cost = np.inf
-        
-        # upper_limit = min(j+(cfg.MAX_RUN*10)-1, self.ref_len-1)
-        # lower_limit = j-1
-        
-        curr_i = i
-        while curr_i >= 0 and curr_i > (i-cfg.ODTW_SEARCH_C):
-            if self.totalCostMatrix[curr_i, j]/(curr_i+j) < min_cost:
-                i_prime, j_prime = (curr_i, j)
-                min_cost = self.totalCostMatrix[i_prime, j_prime]/(curr_i+j)
-            curr_i -= 1
-        
-        curr_j = j-1
-        while curr_j >= 0 and curr_j > (j-cfg.ODTW_SEARCH_C):
-            if self.totalCostMatrix[i, curr_j]/(i+curr_j) < min_cost:
-                i_prime, j_prime = (i, curr_j)
-                min_cost = self.totalCostMatrix[i_prime, j_prime]/(i+curr_j)
-            curr_j -= 1
-
-        # jump_threshold = 2
-        # if self.prev_j_prime[0] == j_prime:
-        #     if self.prev_j_prime[1] > cfg.MAX_RUN:
-        #         j_prime+=jump_threshold
-        #         self.prev_j_prime = [j_prime, 0]
-        #     else:
-        #         self.prev_j_prime[1] += 1 # max run
-        # else:
-        #     self.prev_j_prime = [j_prime, 0]
-            
-        return i_prime, j_prime
-    
-    def deals_thread(self, q, live_pos):
-        # deals rpe position
-        while not q.empty():
-            ref_pos = q.get()
-            cost = self.__backtracking(ref_pos, live_pos)
-            self.min_rpe_ret = min(self.min_rpe_ret, (cost, ref_pos), key=lambda a: a[0])
-            q.task_done()
-    
-    def __backtracking(self, ref_pos, live_pos):
-        row_maxcount = 0
-        col_maxcount = 0
-        row_flag = True
-        col_flag = True
-        step = 0
-        count = 0
-        i = live_pos
-        j = int(ref_pos)
-        accumulate_cost = self.totalCostMatrix[i,j]
-        while (i>0 or j>0) and step < cfg.ODTW_SEARCH_C:
-            if i == 0:
-                j-=1
-            elif j == 0:
-                i-=1
-            else:
-                if row_flag == False:
-                    minc = min(self.totalCostMatrix[i, j-1], self.totalCostMatrix[i-1, j-1])
-                elif col_flag == False:
-                    minc = min(self.totalCostMatrix[i-1, j], self.totalCostMatrix[i-1, j-1])
-                else:
-                    minc = min(self.totalCostMatrix[i-1, j], self.totalCostMatrix[i, j-1], self.totalCostMatrix[i-1, j-1])
-                    
-                if minc == self.totalCostMatrix[i-1, j-1]:
-                    i-=1
-                    j-=1
-                    count+=2
-                    row_maxcount, col_maxcount = 0, 0
-                    row_flag, col_flag = True, True
-                elif minc == self.totalCostMatrix[i, j-1]:
-                    j-=1
-                    count+=1
-                    row_maxcount = 0
-                    row_flag = True
-                    if col_maxcount+1 == cfg.MAX_RUN:
-                        col_flag = False
-                    col_maxcount+=1
-                else:
-                    i-=1
-                    count+=1
-                    col_maxcount = 0
-                    col_flag = True
-                    if row_maxcount+1 == cfg.MAX_RUN:
-                        row_flag = False
-                    row_maxcount+=1
-            step+=1
-            accumulate_cost+=self.totalCostMatrix[i,j]
-        if count:
-            cost = accumulate_cost/count
-        else:
-            cost = np.inf
-        # log.info(f"backtrack res: ({ref_pos}, {cost})")
-        return cost
-    
-    def optimalWarpingPath(self):
-        # path.append((i*cfg.STFT['hop'],j*cfg.STFT['hop']))
-        i,j = self.acc_path[-1][0], self.ref_len-1
-        # i,j = 1081, self.ref_len-1
-        self.offline_path.append((i,j))
-        # factor = 1.0
-        while i>0 or j>0:
-            if i == 0:
-                j -= 1
-            elif j == 0:
-                i -= 1
-            else:
-                dmin = min(self.totalCostMatrix[i-1, j], self.totalCostMatrix[i, j-1], self.totalCostMatrix[i-1, j-1])
-                # print(self.totalCostMatrix[i-1, j], self.totalCostMatrix[i, j-1], self.totalCostMatrix[i-1, j-1])
-                if dmin == self.totalCostMatrix[i-1, j-1]:
-                    i-=1
-                    j-=1
-                elif dmin == self.totalCostMatrix[i-1, j]:
-                    i-=1
-                    # factor-=0.001
-                else:
-                    j-=1
-                    # factor+=0.001
-            # path.append((i*cfg.STFT['hop'],j*cfg.STFT['hop']))
-            self.offline_path.append((i,j))
-        self.offline_path.reverse()
-    
-    def draw(self):
-        d = dict(self.totalCostMatrix)
-        cost_matrix = []
-        for j in range(self.ref_feature.shape[0]):
-            x = []
-            for i in range(self.live_feature_record.shape[0]):
-                if (i,j) in d.keys():
-                    try:
-                        x.append(int(d[(i,j)]))
-                    except:
-                        x.append(np.inf)
-                else:
-                    x.append(np.inf)
-            cost_matrix.append(x)
-        # while not self.rpe_queue.empty():
-        #     points, frame = self.rpe_queue.get()
-        #     flag = True
-        #     for p in points:
-        #         plt.scatter(frame//882, int(p), c='black', s=2) if flag else plt.scatter(frame//882, int(p), c='gray', s=2)
-        #         flag=False
-        
-        # pre_j = -1
-        # for i,j in self.offline_path:
-        #     # if pre_j != j:
-        #     #     print("i:", i, j)
-        #     #     pre_j = j
-        #     plt.scatter(i, j, c='b', s=1.5) # x: live y: ref
-        fig = plt.figure(figsize=(10, 8))
-        for i,j in self.acc_path:
-            # if pre_j != j:
-            #     print("i:", i, j)
-            #     pre_j = j
-            plt.scatter(i, j, c='g', s=1) # x: live y: ref
-        for i,j in self.others_rpe_points:
-            plt.scatter(i, j, c='yellow', s=1) # x: live y: ref
-            
-        for i,j in self.rpe_points:
-            plt.scatter(i, j, c='cyan', s=1) # x: live y: ref
-        
-        plt.title("DMA online cost matrix")
-        plt.imshow(cost_matrix, cmap="inferno")
-        plt.colorbar()
-        plt.xlabel('live')
-        plt.ylabel('ref')
-        plt.gca().invert_yaxis()
-        plt.savefig(f"{cfg.FOLDER}/DMA.png")
-        # plt.show()

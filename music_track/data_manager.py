@@ -45,14 +45,14 @@ class AudioData():
         self.silence_feature = self.getHighFeature(silence_feature)
         # self.md_ref_feature = self.ref_high_feature[:, :self.silence_feature.shape[1]]
         self.half_sec_ref_mean_amplitude = np.abs(self.ref[:cfg.HALF_SEC_FRAME]).mean()
-        self.half_sec_ref_RMS = np.sqrt(np.mean(self.ref[:cfg.HALF_SEC_FRAME] ** 2))
+        # self.half_sec_ref_RMS = np.sqrt(np.mean(self.ref[:cfg.HALF_SEC_FRAME] ** 2))
         
         self.mt_start_frame = 0
         self.mt_adjust_amplitude = 1
         
         self.output_path = []
         
-        log.info(f"MD mean amplitude/RMS: {self.half_sec_ref_mean_amplitude, self.half_sec_ref_RMS}")
+        log.info(f"MD mean amplitude: {self.half_sec_ref_mean_amplitude}")
         log.info(f"Ref data shape: {self.ref_stft_feature.shape, self.ref_high_feature.shape, self.ref_low_feature.shape}")
         log.info(f"Acc data shape: {self.acc_stft_feature.shape}")
         log.info(f"Event status: {self.music_detector_event.is_set(), self.music_trackers_event.is_set()}")
@@ -62,13 +62,13 @@ class AudioData():
         log.info(f"audio queue size: {self.music_detector_queue.qsize(), self.high_feature_queue.qsize(), self.low_feature_queue.qsize()}")
     
     def onlineMdFeatureExtraction(self, half_seg):
-        seg_mean_amplitude = np.abs(half_seg).mean()
-        seg_rms = np.sqrt(np.mean(half_seg ** 2))
-        log.info(f"seg_mean_amplitude: {seg_mean_amplitude}, seg RMS: {seg_rms}")
-        # if seg_mean_amplitude <= cfg.MEAN_AMPLITUDE_THRESHOLD:
-        #     return
-        if seg_rms <= cfg.RMS_THRESHOLD or seg_mean_amplitude <= cfg.MEAN_AMPLITUDE_THRESHOLD:
+        if self.detectMuteLiveSegment(half_seg):
             return
+        # seg_mean_amplitude = np.abs(half_seg).mean()
+        # seg_rms = np.sqrt(np.mean(half_seg ** 2))
+        # log.info(f"seg_mean_amplitude: {seg_mean_amplitude}, seg RMS: {seg_rms}")
+        # if seg_rms <= cfg.RMS_THRESHOLD or seg_mean_amplitude <= cfg.MEAN_AMPLITUDE_THRESHOLD:
+        #     return
         
         # self.mt_adjust_amplitude = self.half_sec_ref_mean_amplitude/seg_mean_amplitude
         # if self.mt_adjust_amplitude <= cfg.MIN_ADJUST_MAG:
@@ -100,9 +100,12 @@ class AudioData():
         if self.music_trackers_event.is_set():
             # use normal feature
             self.high_feature_queue.put(high_feature.T)
-        else:
+        elif self.music_detector_event.is_set():
             self.mt_start_frame = self.live_high_feature.shape[1]
             log.info(f"mt_start_frame: {self.mt_start_frame}")
+        else:
+            log.info(f"Do nothing")
+            
     
     def onlineLowFeatureExtraction(self, low_window_point, window_point):
         start = low_window_point*cfg.LOW_HOP_SIZE
@@ -124,7 +127,13 @@ class AudioData():
                 self.low_feature_queue.put((low_feature.T, window_point-self.mt_start_frame)) # odtw was computed by 0 frame
             return True
         return False
-        
+    
+    def detectMuteLiveSegment(self, seg):    
+        seg_mean_amplitude = np.abs(seg).mean()
+        log.info(f"seg_mean_amplitude: {seg_mean_amplitude}")
+        if seg_mean_amplitude <= cfg.MEAN_AMPLITUDE_THRESHOLD:
+            return True
+        return False
         
     def getSTFTFeature(self, raw_frame_data):
         return stft(y=raw_frame_data, 
@@ -132,6 +141,13 @@ class AudioData():
                     hop_length=cfg.HOP_SIZE, 
                     win_length=cfg.WINDOW_SIZE, 
                     center=False)
+    
+    def getISTFTFeature(self, stft_matrix):
+        return istft(stft_matrix,
+                     n_fft=cfg.NFFT, 
+                     hop_length=cfg.HOP_SIZE, 
+                     win_length=cfg.WINDOW_SIZE, 
+                     center=False)
     
     def getHighFeature(self, stft_feature):
         return melspectrogram(S=np.abs(stft_feature)**2, 
@@ -168,6 +184,10 @@ class AudioData():
             i, j = self.res_path_queue.get()
             self.output_path.append(np.array([i+self.mt_start_frame, j]))
         self.output_path = np.array(self.output_path)
+    
+    def getOutputSegment(self, acc_pos):
+        stft_seg = self.acc_stft_feature[:, cfg.HALF_SEC_HIGH_FEATURE+acc_pos]
+        return self.getISTFTFeature(stft_seg[:, np.newaxis])
         
     def drawOfflineAndOnlineOutputFrames(self):
         D, wp = dtw(X=self.live_high_feature, Y=self.ref_high_feature, metric='euclidean')
@@ -179,7 +199,7 @@ class AudioData():
         for i,j in wp:
             if i == prei:
                 continue
-            print(i)
+            # print(i)
             avg_deviation += abs(self.output_path[i][1]-j)
             prei = i
             count += 1
@@ -192,8 +212,8 @@ class AudioData():
         fig = plt.figure(figsize=(10, 8))
         ax = fig.add_subplot(111)
         plt.imshow(D.T, cmap="inferno")
-        for i in range(len(self.output_path)):
-            print(self.output_path[i], new_offline_path[len(self.output_path)-1-i])
+        # for i in range(len(self.output_path)):
+        #     print(self.output_path[i], new_offline_path[len(self.output_path)-1-i])
             
         plt.plot(self.output_path[:, 0], self.output_path[:, 1], marker='o', color='green', markersize = 1)
         plt.plot(wp[:, 0], wp[:, 1], marker='o', color='lightskyblue', markersize = 1)
@@ -244,7 +264,7 @@ class AudioData():
         # plt.show()
     
     
-    def writeOutputAudio(self, record, live):
+    def writeOutputAudio(self, record, live, output):
         adjust_acc_frames = np.zeros((self.mt_start_frame, (cfg.WINDOW_SIZE//2)+1), dtype=np.float32)
     
         original_acc_frames = self.acc_stft_feature[:, cfg.HALF_SEC_HIGH_FEATURE:].T
@@ -252,7 +272,8 @@ class AudioData():
             if j < original_acc_frames.shape[0]:
                 adjust_acc_frames = np.concatenate((adjust_acc_frames, original_acc_frames[np.newaxis,j]))
         # y_inv = griffinlim(adjust_acc_frames.T, hop_length=cfg.HOP_SIZE, win_length=cfg.WINDOW_SIZE, n_fft=cfg.NFFT, center=False)
-        adjust_acc_audio = istft(adjust_acc_frames.T, n_fft=cfg.NFFT, hop_length=cfg.HOP_SIZE, win_length=cfg.WINDOW_SIZE, center=False)
+        # adjust_acc_audio = istft(adjust_acc_frames.T, n_fft=cfg.NFFT, hop_length=cfg.HOP_SIZE, win_length=cfg.WINDOW_SIZE, center=False)
+        adjust_acc_audio = self.getISTFTFeature(adjust_acc_frames.T)
         
         # while not self.res_path_queue.empty():
         #     i,j = self.res_path_queue.get()
@@ -263,16 +284,20 @@ class AudioData():
         # ''' # write result
         output_main_record = f"{cfg.FOLDER}/output_main_record.wav"
         output_live = f"{cfg.FOLDER}/live_record.wav"
+        output_streamacc = f"{cfg.FOLDER}/live_acc_record.wav"
         output_liveacc = f"{cfg.FOLDER}/acc_record.wav"
         # scipy.io.wavfile.write(output_live, 44100, np.array(stream_live_audio, dtype=np.float32))
         scipy.io.wavfile.write(output_main_record, 44100, np.array(record, dtype=np.float32))
         scipy.io.wavfile.write(output_live, 44100, np.array(live, dtype=np.float32))
+        scipy.io.wavfile.write(output_streamacc, 44100, np.array(output, dtype=np.float32))
         scipy.io.wavfile.write(output_liveacc, 44100, np.array(adjust_acc_audio, dtype=np.float32))
         output_combined = f"{cfg.FOLDER}/combined.wav"
         
         # overlay live and acc audio
         sound1 = AudioSegment.from_file(output_live)
-        sound2 = AudioSegment.from_file(output_liveacc)
+        # sound1 = AudioSegment.from_file(output_main_record)
+        # sound2 = AudioSegment.from_file(output_liveacc)
+        sound2 = AudioSegment.from_file(output_streamacc)
         sound2 = sound2[:]+5
         combined = sound1.overlay(sound2)
         combined.export(output_combined, format='wav')
@@ -308,7 +333,7 @@ class ProcQueue():
         deque_manager = DequeManager()
         deque_manager.start()
         self.acc_deque = deque_manager.DequeProxy(maxlen=3)
-        
+        self.output_deque = deque_manager.DequeProxy(maxlen=3)
     def getLiveQueue(self):
         return self.live_q
 
@@ -332,6 +357,9 @@ class ProcQueue():
 
     def getAccDeque(self):
         return self.acc_deque
+
+    def getOutputDeque(self):
+        return self.output_deque
 
 class DequeManager(BaseManager):
     pass

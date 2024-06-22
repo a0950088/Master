@@ -98,7 +98,7 @@ class DecisionMaker(Process):
             try:
                 rpe_list, rpe_live_frame = self.rpe_queue.get(timeout=2)
             except:
-                log.info(f"rpe res queue time out! Checking mt event!")
+                # log.info(f"rpe res queue time out! Checking mt event!")
                 continue
             
             log.info(f"rpe res data: {rpe_list, rpe_live_frame}") 
@@ -109,9 +109,12 @@ class DecisionMaker(Process):
             odtw_i, odtw_j = self.acc_queue.peek_last()
             log.info(f"now acc data: {odtw_i, odtw_j}") 
             
-            while odtw_i//cfg.HOP_SIZE < rpe_live_frame and odtw_main_thread.is_alive():
+            # while odtw_i//cfg.HOP_SIZE < rpe_live_frame and odtw_main_thread.is_alive():
+            #     odtw_i, odtw_j = self.acc_queue.peek_last()
+            # prime_key_point = odtw_j//cfg.HOP_SIZE
+            while odtw_i < rpe_live_frame and odtw_main_thread.is_alive():
                 odtw_i, odtw_j = self.acc_queue.peek_last()
-            prime_key_point = odtw_j//cfg.HOP_SIZE
+            prime_key_point = odtw_j
             jobs.put(prime_key_point) # now j_prime point
             # self.odtw.others_rpe_points.append((rpe_live_frame, prime_key_point))
             # for pos in range(prime_key_point-(cfg.MAX_RUN*5), min(prime_key_point+(cfg.MAX_RUN*5)+1, self.odtw.ref_len), 5):

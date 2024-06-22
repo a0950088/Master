@@ -6,7 +6,7 @@ import numpy as np
 from data_manager import ProcQueue, ProcEvent, AudioData
 from stream import Stream
 from process_blocks import MusicDetector, RoughEstimator, DecisionMaker
-from methods import DTW, RPE, ODTW, TestODTW
+from methods import DTW, RPE, ODTW
 import config as cfg
 from logger import getmylogger
 log = getmylogger(__name__)
@@ -32,6 +32,8 @@ if __name__ == '__main__':
     mt_event = proc_event.getMTEvent()
     
     live_queue = proc_queue.getLiveQueue()
+    acc_queue = proc_queue.getAccDeque()
+    output_queue = proc_queue.getOutputDeque()
     
     audio_data = AudioData(ref, acc, 
                            proc_queue.getMDQueue(),
@@ -41,7 +43,7 @@ if __name__ == '__main__':
                            md_event,
                            mt_event)
     
-    audio_stream = Stream(mode, queue=live_queue, test_data=live)
+    audio_stream = Stream(mode, live_queue=live_queue, output_queue=output_queue, test_data=live)
     
     dtw_inst = DTW(audio_data.getMDHighRefFeature(), audio_data.getMDSilenceFeature())
     md_proc = MusicDetector(dtw_inst=dtw_inst, live_queue=proc_queue.getMDQueue(), 
@@ -69,9 +71,11 @@ if __name__ == '__main__':
     window_point = 0
     low_window_point = 0
     record = np.zeros(0, dtype=np.float32)
-    audio_stream.start()
+    live_end_count = cfg.LIVE_END_COUNT
     
+    audio_stream.start()
     while audio_stream.stream.is_active():
+        prev_run_time = time.time()
         try:
             live_frame = live_queue.get(timeout=2)
         except:
@@ -79,6 +83,18 @@ if __name__ == '__main__':
             break
         live_data = live_frame[0]
         live_len += live_frame[1]
+        if mt_event.is_set():
+            log.warning(f"Testing mute seg: {audio_data.detectMuteLiveSegment(live_data)}, {live_len}")
+            if audio_data.detectMuteLiveSegment(live_data):
+                live_end_count -= 1
+                log.warning(f"live end count: {live_end_count}")
+                if live_end_count <= 0:
+                    # end live
+                    log.warning(f"END LIVE")
+                    output_queue.append(None)
+            else:
+                live_end_count = cfg.LIVE_END_COUNT
+                
         record = np.concatenate((record, live_data), dtype=np.float32)
         if md_event.is_set() and len(record) >= cfg.HALF_SEC_FRAME:
             audio_data.onlineMdFeatureExtraction(record[-cfg.HALF_SEC_FRAME:])
@@ -92,9 +108,15 @@ if __name__ == '__main__':
                 low_window_point+=1
             window_point+=1
         
+        if len(acc_queue) > 0:
+            _, acc_pos = acc_queue.peek_last()
+            output_data = audio_data.getOutputSegment(acc_pos)
+            # log.info(f"output_queue: {len(output_queue)}")
+            output_queue.append(output_data)
         audio_data.logAudioQueueSize()
         log.info(f"now tracking window point: {window_point-audio_data.mt_start_frame}")
         log.info(f"Live queue status: {live_queue.qsize(), live_len}")
+        log.info(f"Spent time: {time.time()-prev_run_time}")
 
     md_proc.join()
     rpe_proc.join()
@@ -105,6 +127,7 @@ if __name__ == '__main__':
     audio_data.draw_feature(diff=False)
     audio_data.drawOfflineAndOnlineOutputFrames()
     
-    audio_data.writeOutputAudio(record, live)
+    # audio_data.writeOutputAudio(record, live)
+    audio_data.writeOutputAudio(record, audio_stream.live_record, audio_stream.output_record)
     
     log.info(f"All proc end")

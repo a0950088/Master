@@ -9,11 +9,11 @@ DATE = datetime.date.today()
 # ACC_PATH = Path('./assessment/acc.wav')
 # FOLDER = Path(f"./{LIVE_PATH.parent.parent}/tracking_result/{LIVE_PATH.stem}/{DATE}_{REF_PATH.stem}")
 
-LIVE_PATH = Path('./real_record/beethoven/data/newweb_v3_blank.wav')
+LIVE_PATH = Path('./real_record/beethoven/data/140_v1_blank.wav')
 # REF_PATH = Path('./real_record/beethoven/ref_data/beethoven_LKavakos_violin_25bins_clear_v2.wav')
 # ACC_PATH = Path('./real_record/beethoven/ref_data/beethoven_LKavakos_piano_25bins_clear_v2.wav')
-REF_PATH = Path('./real_record/beethoven/ref_data/ref_newweb_v1.wav')
-# REF_PATH = Path('./real_record/beethoven/ref_data/web_beethoven_conbined_violin_25bins_v2.wav')
+# REF_PATH = Path('./real_record/beethoven/ref_data/ref_newweb_v1_cut.wav')
+REF_PATH = Path('./real_record/beethoven/ref_data/web_beethoven_conbined_violin_25bins_v2.wav')
 ACC_PATH = Path('./real_record/beethoven/ref_data/web_beethoven_conbined_piano_25bins_v2.wav')
 # REF_PATH = Path('./real_record/beethoven/ref_data/ref_web_25bins.wav')
 # ACC_PATH = Path('./real_record/beethoven/ref_data/acc_web_25bins.wav')
@@ -34,8 +34,10 @@ LOW_HOP_SIZE = 15
 LOW_WIN = hanning(LOW_WINDOWS_SIZE)
 
 """ Stream """
-STREAM_BUFFER = 2048
+# STREAM_BUFFER = 2048
+STREAM_BUFFER = WINDOW_SIZE
 CHANNEL = 1
+LIVE_END_COUNT = int(3*SAMPLE_RATE/WINDOW_SIZE)
 
 """ Music detector """
 MEAN_AMPLITUDE_THRESHOLD = 0.01 # 0.015

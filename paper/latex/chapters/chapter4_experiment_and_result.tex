@@ -85,8 +85,9 @@ Bach Violin Dataset為整合了高品質公開錄音的巴赫小提琴獨奏奏�
 因此在訓練兩種模型時，
 我們參考~\cite{Chiu_ChingYu2020MixingSpecific}設定的資料筆數$N$，
 $N$為在模型訓練過程中，每次迭帶從每種樂器的資料集隨機選取$N$對所混合的資料筆數。
-我們針對上述兩種情況做測試。
-訓練與驗證的資料筆數$N$如\cref{table:table-training-dataset-split}所示。
+我們將針對上述兩種情況做測試。
+訓練與驗證的資料筆數$N$如\cref{table:table-training-dataset-split}所示，
+random seed皆設定為42，確保兩個模型訓練時所拿到的資料為一致的。
 \begin{table}[h]
     \centering
     \caption{每次迭帶的訓練與驗證資料筆數}
@@ -158,13 +159,13 @@ Data Augmentation方法測試模型效能，
         \hline
         \multicolumn{1}{|c|}{分離目標樂器} & \multicolumn{1}{|c|}{模型} & \multicolumn{1}{|c|}{cSDR} & \multicolumn{1}{|c|}{uSDR}\\
         \hline
-        \multirow{3}*{Violin} & Aug4mss(paper) & 1.08 & No result \\
+        \multirow{3}*{Violin} & Aug4mss(paper) & 1.08 & N/A \\
         \cline{2-4}
         ~ & Aug4mss(retrain) & 2.05 & 1.72 \\
         \cline{2-4}
         ~ & \textbf{Band-Split RNN} & \textbf{8.910} & \textbf{3.264} \\
         \hline
-        \multirow{3}*{Piano} & Aug4mss(paper) & 7.43 & No result \\
+        \multirow{3}*{Piano} & Aug4mss(paper) & 7.43 & N/A \\
         \cline{2-4}
         ~ & Aug4mss(retrain) & 11.906 & 10.974 \\
         \cline{2-4}
@@ -181,13 +182,13 @@ Data Augmentation方法測試模型效能，
         \hline
         \multicolumn{1}{|c|}{分離目標樂器} & \multicolumn{1}{|c|}{模型} & \multicolumn{1}{|c|}{cSDR} & \multicolumn{1}{|c|}{uSDR}\\
         \hline
-        \multirow{3}*{Violin} & Aug4mss(paper) & 3.84 & No result \\
+        \multirow{3}*{Violin} & Aug4mss(paper) & 3.84 & N/A \\
         \cline{2-4}
         ~ & Aug4mss(retrain) & 5.811 & 5.666 \\
         \cline{2-4}
         ~ & \textbf{Band-Split RNN} & \textbf{11.872} & \textbf{8.297} \\
         \hline
-        \multirow{3}*{Piano} & Aug4mss(paper) & 13.46 & No result \\
+        \multirow{3}*{Piano} & Aug4mss(paper) & 13.46 & N/A \\
         \cline{2-4}
         ~ & Aug4mss(retrain) & 13.514 & 14.124 \\
         \cline{2-4}
@@ -244,7 +245,7 @@ Band-Split RNN 在小提琴分離上的 cSDR 和 uSDR 分別為 11.872 和 8.297
         \hline
         \multicolumn{1}{|c|}{分離目標樂器} & \multicolumn{1}{|c|}{Bandwidth} & \multicolumn{1}{|c|}{cSDR} & \multicolumn{1}{|c|}{uSDR}\\
         \hline
-        \multirow{3}*{Violin} & Violin bandwidth version & \textbf{8.910} & \textbf{3.264} \\
+        \multirow{3}*{Violin} & \textbf{Violin bandwidth version} & \textbf{8.910} & \textbf{3.264} \\
         \cline{2-4}
         ~ & Piano bandwidth version & 8.796 & 3.077 \\
         \cline{2-4}
@@ -252,7 +253,7 @@ Band-Split RNN 在小提琴分離上的 cSDR 和 uSDR 分別為 11.872 和 8.297
         \hline
         \multirow{3}*{Piano} & Violin bandwidth version & 14.209 & 13.141 \\
         \cline{2-4}
-        ~ & Piano bandwidth version & \textbf{14.659} & \textbf{13.460} \\
+        ~ & \textbf{Piano bandwidth version} & \textbf{14.659} & \textbf{13.460} \\
         \cline{2-4}
         ~ & V7 bandwidth version & 14.556 & 13.370 \\
         \hline

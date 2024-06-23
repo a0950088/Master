@@ -6,16 +6,16 @@
 \section{音源分離評估}
 本節將比較兩個不同的音源分離模型，Aug4mss~\cite{Chiu_ChingYu2020MixingSpecific}
 與本研究使用的Band-Split RNN~\cite{Luo_Yi2022MusicSourceSeparation}
-在小提琴與鋼琴混合音訊資料上的表現。首先會先介紹使用的訓練資料集與測試資料集，
+在小提琴與鋼琴混合音訊資料上的表現。首先介紹使用的訓練資料集與測試資料集，
 接著介紹模型訓練的設定、評估指標與評估結果。
 
 \subsection{音源分離資料集}
-在眾多的音訊公開資料集中，能包含多音軌錄音資料和乾淨的單音軌錄音資料可說是少之又少，
+在眾多的音訊公開資料集中，能同時包含多音軌錄音資料和乾淨的單音軌錄音資料可說是少之又少，
 在古典樂器的音訊資料集更是如此。
-在~\cite{Chiu_ChingYu2020MixingSpecific}中他們從網路上蒐集了
+Aug4mss從網路上蒐集了
 6小時的古典小提琴獨奏錄音與6小時的流行鋼琴獨奏錄音作為他們的訓練與驗證資料集，
-但因為版權的關係，並沒有提供他們蒐集的資料集給外界使用。
-因此本研究也遵循~\cite{Chiu_ChingYu2020MixingSpecific}的方式，
+但因為版權的關係，他們並沒有提供資料集給外界使用。
+因此本研究遵循Aug4mss蒐集資料集的方式，
 將小提琴與鋼琴兩種樂器的資料分開蒐集。
 我們整合了多個公開資料集作為訓練資料，公開資料集包含由John Thickstun等人提供的
 MusicNet~\cite{Thickstun2017Learning, Thickstun2018Invariances}、
@@ -61,17 +61,17 @@ Bach Violin Dataset為整合了高品質公開錄音的巴赫小提琴獨奏奏�
     \label{table:table-ours-splited-dataset}
     \begin{tabular}{|c|c|c|}
         \hline
-        \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{訓練集} & \multicolumn{1}{|c|}{驗證集} \\
+        \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{小提琴} & \multicolumn{1}{|c|}{鋼琴} \\
         \hline
-        小提琴 & 4hr & 1hr 24min 47sec \\
+        訓練集 & 4hr & 4hr \\
         \hline
-        鋼琴 & 4hr & 1hr 6min 37sec \\
+        驗證集 & 1hr 6min 37sec & 1hr 24min 47sec\\
         \hline
     \end{tabular}
 \end{table}
 
-測試資料集我們採用~\cite{Chiu_ChingYu2020MixingSpecific}
-所提供的公開整合測試資料集進行評估，
+測試資料集我們採用Aug4mss
+提供的公開整合測試資料集進行評估，
 此資料集是從公開資料集MedleyDB~\cite{Bittner2014MedleyDB}中特別
 挑選出小提琴與鋼琴的錄音所製作的測試資料集。
 
@@ -84,7 +84,8 @@ Bach Violin Dataset為整合了高品質公開錄音的巴赫小提琴獨奏奏�
 測試模型在資料缺乏與資料足夠時的表現。
 因此在訓練兩種模型時，
 我們參考~\cite{Chiu_ChingYu2020MixingSpecific}設定的資料筆數$N$，
-$N$為在模型訓練過程中，每次迭帶從每種樂器的資料集隨機選取$N$對所混合的資料筆數。
+$N$為在模型訓練過程中，每次迭帶從每種樂器的資料集隨機選取$N$對所混合的資料筆數，
+每對資料皆為10秒鐘的混合音訊。
 我們將針對上述兩種情況做測試。
 訓練與驗證的資料筆數$N$如\cref{table:table-training-dataset-split}所示，
 random seed皆設定為42，確保兩個模型訓練時所拿到的資料為一致的。
@@ -104,7 +105,7 @@ random seed皆設定為42，確保兩個模型訓練時所拿到的資料為一�
 \end{table}
 
 所有訓練與測試的資料皆為44100Hz取樣率的單聲道音訊，
-STFT Window size為2048，Hop size為512，並保留原始模型的設定參數。
+特徵採樣參數STFT Window size為2048，Hop size為512，並保留原始模型的設定參數。
 模型訓練所使用的顯示卡為GeForce RTX™ 3080 Ti，
 CPU為11th Gen Intel(R) Core(TM) i7-11700K @ 3.60GHz。
 
@@ -147,8 +148,7 @@ $s(n)$為正確的波型，$\hat{s}(n)$為估計的波型，
 
 另外，Aug4mss\cite{Chiu_ChingYu2020MixingSpecific}加入了多種
 Data Augmentation方法測試模型效能，
-由於本研究在訓練模型時皆採用Random mixing的方式
-從訓練資料中隨機挑選每種樂器的10秒音訊進行混合，
+由於本研究在訓練模型時皆採用相同的隨機混合方式，
 因此本研究只比較~\cite{Chiu_ChingYu2020MixingSpecific}中Random mixing的結果。
 
 \begin{table}[h]
@@ -163,13 +163,15 @@ Data Augmentation方法測試模型效能，
         \cline{2-4}
         ~ & Aug4mss(retrain) & 2.05 & 1.72 \\
         \cline{2-4}
-        ~ & \textbf{Band-Split RNN} & \textbf{8.910} & \textbf{3.264} \\
+        % ~ & \textbf{Band-Split RNN} & \textbf{8.910} & \textbf{3.264} \\
+        ~ & \textbf{Band-Split RNN} & \textbf{8.085} & \textbf{5.580} \\
         \hline
         \multirow{3}*{Piano} & Aug4mss(paper) & 7.43 & N/A \\
         \cline{2-4}
         ~ & Aug4mss(retrain) & 11.906 & 10.974 \\
         \cline{2-4}
-        ~ & \textbf{Band-Split RNN} & \textbf{14.659} & \textbf{13.460} \\
+        % ~ & \textbf{Band-Split RNN} & \textbf{14.659} & \textbf{13.460} \\
+        ~ & \textbf{Band-Split RNN} & \textbf{15.975} & \textbf{14.854} \\
         \hline
     \end{tabular}
 \end{table}
@@ -198,8 +200,8 @@ Data Augmentation方法測試模型效能，
 \end{table}
 
 在 Data-limit 的情況下，Band-Split RNN 在小提琴和鋼琴的分離效果上都是表現最為出色。
-Band-Split RNN 在小提琴分離上的 cSDR 和 uSDR 分別為 9.429 和 6.767，
-而在鋼琴分離上的 cSDR 和 uSDR 分別為 14.556 和 13.370。
+Band-Split RNN 在小提琴分離上的 cSDR 和 uSDR 分別為 8.085 和 5.580，
+而在鋼琴分離上的 cSDR 和 uSDR 分別為 15.975 和 14.854。
 相比之下，Aug4mss (retrain) 的結果分別為 2.05 和 1.72（小提琴），
 以及 11.906 和 10.974（鋼琴）。
 
@@ -221,18 +223,21 @@ Band-Split RNN 在小提琴分離上的 cSDR 和 uSDR 分別為 11.872 和 8.297
 
 \subsection{頻帶切割對於分離結果的影響}
 
-在~\cite{Luo_Yi2022MusicSourceSeparation}中有針對頻帶分割對模型結果的影響做一系列的測試，
+在BSRNN~\cite{Luo_Yi2022MusicSourceSeparation}的論文中，
+有針對頻帶分割模組對模型結果的影響做一系列的測試，
 我們可以知道根據樂器不同的頻率範圍、音色特徵等等因素來調整頻帶分割的寬度，
 可能會提升模型的結果。
 
-在\ref{ch3-subst-estimate-band-split-point}節我們針對不同的樂器設計不同的頻帶切割範圍，
-為了驗證此方法效果，我們針對自己設計的頻帶切割範圍，實作以下三個實驗，
+在\ref{ch3-subst-estimate-band-split-point}節我們提出了頻帶切割估計方法並
+針對不同的樂器設計不同的頻帶切割範圍，
+為了驗證此方法效果，我們針對自己設計的頻帶切割範圍，實作以下三個實驗與音源分離結果比較，
 \begin{enumerate}
     \item 使用~\cite{Luo_Yi2022MusicSourceSeparation}
     中效果最好的頻帶切割範圍V7訓練小提琴與鋼琴的音源分離模型
     \item 使用小提琴的頻帶切割範圍訓練鋼琴音源分離模型
     \item 使用鋼琴的頻帶切割範圍訓練小提琴音源分離模型
 \end{enumerate}
+V7、小提琴、鋼琴的子頻帶數皆為40個，
 為了節省訓練時間，上述實驗皆使用Data-limit的情況訓練，
 我們將這些模型的結果一一列出比較，
 如\cref{table:table-data-limit-mss-band-split-range-comparision}所示。
@@ -245,26 +250,31 @@ Band-Split RNN 在小提琴分離上的 cSDR 和 uSDR 分別為 11.872 和 8.297
         \hline
         \multicolumn{1}{|c|}{分離目標樂器} & \multicolumn{1}{|c|}{Bandwidth} & \multicolumn{1}{|c|}{cSDR} & \multicolumn{1}{|c|}{uSDR}\\
         \hline
-        \multirow{3}*{Violin} & \textbf{Violin bandwidth version} & \textbf{8.910} & \textbf{3.264} \\
+        % \multirow{3}*{Violin} & \textbf{Violin bandwidth version} & \textbf{8.910} & \textbf{3.264} \\
+        \multirow{3}*{Violin} & Violin bandwidth version & 8.085 & \textbf{5.580} \\
         \cline{2-4}
-        ~ & Piano bandwidth version & 8.796 & 3.077 \\
+        % ~ & Piano bandwidth version & 8.796 & 3.077 \\
+        ~ & Piano bandwidth version & \textbf{9.908} & 5.532 \\
         \cline{2-4}
         ~ & V7 bandwidth version & 8.842 & 3.157 \\
         \hline
-        \multirow{3}*{Piano} & Violin bandwidth version & 14.209 & 13.141 \\
+        % \multirow{3}*{Piano} & Violin bandwidth version & 14.209 & 13.141 \\
+        \multirow{3}*{Piano} & Violin bandwidth version & 15.653 & 14.851 \\
         \cline{2-4}
-        ~ & \textbf{Piano bandwidth version} & \textbf{14.659} & \textbf{13.460} \\
+        % ~ & \textbf{Piano bandwidth version} & \textbf{14.659} & \textbf{13.460} \\
+        ~ & Piano bandwidth version & \textbf{15.975} & \textbf{14.854} \\
         \cline{2-4}
         ~ & V7 bandwidth version & 14.556 & 13.370 \\
         \hline
     \end{tabular}
 \end{table}
 
-當目標樂器為小提琴時，我們使用小提琴的頻帶切割範圍的訓練結果優於使用鋼琴範圍與V7範圍，
-當目標樂器為鋼琴時，我們使用鋼琴的頻帶切割範圍的訓練結果優於使用小提琴範圍與V7範圍，
-由此可見，當我們根據樂器的聲音特性來分配每個頻帶的細緻度，有助於音源分離的效果。
-另外可以看到V7在兩種目標樂器的訓練結果表現皆為中間，且沒有與最好的效果差太多，
-因此可以說V7頻帶範圍是小提琴與鋼琴都適用的範圍。
+當目標樂器為小提琴時，我們使用小提琴的頻帶切割範圍的訓練結果雖然在cSDR指標並不是最高，
+但在uSDR的表現上為最佳，優於使用鋼琴範圍與V7範圍的結果，
+我認為可能是我們使用的估計頻帶資料多樣性太少，未來可以篩選不同曲風的小提琴音訊作為估計資料。
+當目標樂器為鋼琴時，我們使用鋼琴的頻帶切割範圍的訓練結果優於使用小提琴範圍與V7範圍的結果，
+由此可見，我們所提出的頻帶分割估計方法在uSDR的結果上皆優於BSRNN提出的V7頻帶範圍，
+有助於提升音源分離的效果。
 
 \pagebreak
 
@@ -272,16 +282,17 @@ Band-Split RNN 在小提琴分離上的 cSDR 和 uSDR 分別為 11.872 和 8.297
 
 \subsection{系統在不同速度下的追蹤結果} \label{ch4-subst-midi-tracking-results}
 我們參考~\cite{Lin2020AHumanComputerDuetSystem}中的評估方法來檢測小提琴演奏追蹤系統的表現，
-在~\cite{Lin2020AHumanComputerDuetSystem}中，現場演奏樂器為鋼琴，電腦輸出合奏為小提琴，
+在~\cite{Lin2020AHumanComputerDuetSystem}中，現場演奏樂器為鋼琴，電腦輸出合奏為小提琴(MIDI)，
+參考音訊為MIDI檔案，
 演奏曲子為貝多芬的Violin Sonata No.5, Op.24(Spring), movement I. Allegro 前25小節。
-為了評估系統在不同演奏速度下的反應，他們使用四種不同速度範圍測試系統，分別為演奏正常速度(115-145bpm)、
+為了評估系統在不同演奏速度下的反應，他們使用四種不同速度範圍來測試系統，分別為演奏正常速度(115-145bpm)、
 慢速(90-120bpm)、快速(135-175bpm)、漸快(由80bpm加速至160bpm)，參考音訊的速度設定為120bpm。
 他們使用錄音設備錄製現場鋼琴與小提琴的演奏，
-並使用節拍追蹤工具得到現場與參考鋼琴之間的節拍位置，進一步生成正確小提琴輸出位置(ground truth)，
+並使用節拍追蹤工具得到現場與參考鋼琴之間的節拍位置，進一步生成正確小提琴輸出位置(Ground truth)，
 最後計算現場小提琴輸出位置與正確小提琴輸出位置的DTW對齊路徑，
 使用\cref{eq:latency-function}與\cref{eq:avarage-latency-function}計算瞬間延遲與平均延遲來評估。
 
-本研究使用的現場演奏樂器為小提琴，電腦輸出合奏為鋼琴，在演奏曲子與參考音訊的設定上我們跟隨
+本研究使用的現場演奏樂器為小提琴，電腦輸出合奏為鋼琴，在演奏曲子與參考音訊速度的設定上我們跟隨
 ~\cite{Lin2020AHumanComputerDuetSystem}的設定，
 然而在~\cite{Lin2020AHumanComputerDuetSystem}中並沒有提到他們是如何控制現場演奏速度的變化，
 本研究為了能客觀地控制速度變化並計算評估結果，
@@ -327,7 +338,7 @@ Band-Split RNN 在小提琴分離上的 cSDR 和 uSDR 分別為 11.872 和 8.297
 
 由於正確的鋼琴輸出音訊已經透過MIDI檔案生成，
 % 因此我們只需要使用追蹤結果與正確的鋼琴輸出音訊計算DTW對齊路徑，
-因此我們只需要將正確伴奏音訊$Acc_{gt}$與追蹤系統估計的伴奏音訊$Acc_{out}$計算DTW對齊路徑，
+我們只需要用正確伴奏音訊$Acc_{gt}$與追蹤系統估計的伴奏音訊$Acc_{out}$計算DTW對齊路徑，
 由於伴奏音訊的時間長度是一致的，
 因此可以根據\cref{eq:latency-function}
 算出$Acc_{out}$在$Acc_{gt}$上的瞬間延遲(latency)。
@@ -399,7 +410,7 @@ $| \Delta t\vert $為現場伴奏音訊的延遲。
 
 
 另外我們也顯示了四種速度的對齊路徑結果圖，橫軸為現場音訊的時間點，縱軸為參考音訊的時間點，
-熱點圖的顏色代表在時間點$(i, j)$的累積距離成本值，成本值越高顏色越接近黃色。
+熱點圖的顏色代表在時間點$(i, j)$的累積距離成本值，成本值越高顏色越亮。
 (a)圖為追蹤系統在執行時所輸出的結果圖，
 (b)圖為離線對齊路徑與線上對齊路徑的比較圖，離線對齊路徑使用DTW計算。
 
@@ -507,8 +518,9 @@ $| \Delta t\vert $為現場伴奏音訊的延遲。
 在演奏時使用AKG C519 M 電容式麥克風收錄音訊，監聽耳機為Sony MDR 7506，
 並使用Focusrite Scarlett 2i2錄音介面處理類比與數位訊號。
 
-由於沒有正確的伴奏音訊(Ground truth)，因此我們無法使用\ref{ch4-subst-midi-tracking-results}節的方法來評估效果。
-我們改由計算系統輸出路徑與DTW離線對齊路徑的平均延遲幀數來評估系統在線上追蹤的表現，
+由於沒有正確的伴奏音訊(Ground truth)，因此我們無法使用\ref{ch4-subst-midi-tracking-results}節的方法來評估
+與正確伴奏音訊的延遲。
+因此我們改由計算系統輸出路徑與DTW離線對齊路徑的平均延遲幀數來評估系統在線上追蹤的表現是否與離線追蹤相當，
 這邊的平均延遲幀數代表的是對於線上追蹤表現，是否提前或落後離線追蹤表現。
 
 下圖為五種不同速度的對齊路徑結果圖，橫軸為現場音訊的時間點，縱軸為參考音訊的時間點，
@@ -640,7 +652,9 @@ RPE估計出的位置也因為兩個音訊的特徵不夠相近，使粗略估�
 但實際聽起來並沒有延遲500ms那麼多。
 
 我們也測試了使用同一人演奏的參考特徵來追蹤現場演奏的效果，
-首先我們先錄製了與伴奏音訊完整對齊的音訊作為參考音訊，接著現場演奏我們一樣採自由速度，
+首先我們先錄製了與伴奏音訊完整對齊的音訊作為混合音訊，並將此混合音訊透過音源分離模型分離成參考音訊與伴奏音訊，
+並使用這些音訊進行音樂追蹤。
+接著現場演奏我們一樣採自由速度，
 聆聽伴奏音訊來演奏，結果如\cref{fig:fig-ch4-free-ours-ref-tracking-results}所示，
 可以看到線上對齊路徑與離線對齊路徑重合，代表系統輸出的路徑是最佳對齊位置，
 在平均延遲上也比\cref{fig:fig-ch4-mss-free-tracking-results}要來的好。
@@ -660,14 +674,15 @@ RPE估計出的位置也因為兩個音訊的特徵不夠相近，使粗略估�
     \caption{自由速度(參考音訊為同一人所演奏) 平均延遲：22.54 幀}
     \label{fig:fig-ch4-free-ours-ref-tracking-results}
 \end{figure}
+上述的結果音檔可從此連結~\cite{YuJieLin2024DiffFeatureTrackingResults}查看聆聽。
 
-% cost matrix對齊圖
-% dtw vs ODTW對齊圖
+最後，根據~\cite{lin2021AIMusician}的紀錄，
+~\cite{Lin2020AHumanComputerDuetSystem}的系統在偵測到觸發伴奏的平均延遲控制在0.1秒左右，
+而本研究實際測試後，我們的系統可將偵測到觸發伴奏的平均延遲控制在0.05秒左右。
 
 % \subsection{不同系統參數設定下的追蹤結果}
 % 需測試
 
-上述的結果音檔可從此連結~\cite{YuJieLin2024DiffFeatureTrackingResults}查看聆聽。
 
 \pagebreak
 

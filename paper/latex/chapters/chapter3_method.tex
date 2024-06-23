@@ -25,7 +25,8 @@
 \cref{fig:fig-ch3-system-structure-overview} (C)
 為音樂追蹤模組的細部架構，
 此模組使用Python 3.9開發，
-我們使用multiprocessing package~\cite{python2024multiprocessing}實現平行化處理，
+我們使用multiprocessing package~\cite{python2024multiprocessing}
+實現每個元件的多行程處理(Multi-processing)，
 串流音訊使用pyaudio package~\cite{python2024pyaudio}接收處理，
 達到即時追蹤與伴奏的效果。
 此模組包含四個元件，
@@ -75,7 +76,9 @@ BSRNN將輸入的頻譜圖$X\in \mathbb{C} ^{F\times T}$
 使用快速傅立葉轉換(Fast Fourier Transform, FFT)
 計算頻率域的每個頻率樣本占有的成分，
 由於FFT的對稱性，我們只需要迭帶一半的樣本數，並將振幅值累加到對應的$F_{band}$。
-累加振幅值越高代表此頻率的重要程度越高，如\cref{fig:fig-ch3-bandwidth-estimate}所示。
+累加振幅值越高代表此頻率的重要程度越高，如\cref{fig:fig-ch3-bandwidth-estimate}所示，
+此圖為兩種樂器中其中一段音訊資料的波形圖(上)與經過FFT轉換後的$F_{band}$圖(下)，
+可以看到經過FFT轉換後我們可以清楚的看到每個頻率點在這段音訊中佔有的成分。
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.7\linewidth]{ch3/fig-bandwidth-estimate.png}
@@ -106,35 +109,34 @@ BSRNN將輸入的頻譜圖$X\in \mathbb{C} ^{F\times T}$
 
 最後我們對$F_{band}$的範圍迭帶計算每個區間的頻率成份佔總成份的累積百分比$f_{range}/\sum F_{band}$，
 若超過切割比例閥值$r$，則在此頻率點增加一個切割點。
-% 本研究之兩種樂器的切割比例閥值為$r_{violin}=0.0016$, $r_{piano}=0.0054$，
-% 依照上述的切割比例我們得到兩種樂器的頻帶切割點為 \\
-% \\
-% Violin = [355,455,555,655,755,855,955,1055,1155,1255,1396,1515,1639,1763,\\
-% 1863,1963,2063,2212,2312,2412,2512,2629,2735,2840,2964,3079,3211,3383,3590,\\
-% 3795,3986,4205,4512,4923,5486,6314,7570,9488,13042]\\
-% \\
-% Piano = [100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,\\
-% 1600,1700,1800,1900,2000,2100,2200,2300,2400,2511,2627,2727,2827,2966,3114,\\
-% 3238,3422,3624,3975,4281,4773,5417,6591,9191]\\
-% \\
-% 上述兩個頻帶陣列代表訓練時所切割的頻帶點，
-% 例如Violin的子頻帶為(0-355Hz,\ 355-455Hz,\ $\dots$ ,\ 13042-22050Hz)，
-% Piano的子頻帶為(0-100Hz,\ 100-200Hz,\ $\dots$ ,\ 9191-22050Hz)
-% 在訓練BSRNN模型時我們將會套用上面兩個頻帶切割範圍做訓練。
 依照上述的切割比例我們得到兩種樂器的頻帶切割點為 \\
 \\
-Violin = [400,500,600,700,800,900,1000,1100,1200,1300,1500,1600,1700,1800,\\
-1900,2000,2100,2300,2400,2500,2600,2700,2800,2900,3000,3200,3400,3600,3800,\\
-4000,4200,4500,4800,5300,5800,6500,7400,8600,10400,13000,18000]\\
+Violin = [355,455,555,655,755,855,955,1055,1155,1255,1396,1515,1639,1763,\\
+1863,1963,2063,2212,2312,2412,2512,2629,2735,2840,2964,3079,3211,3383,3590,\\
+3795,3986,4205,4512,4923,5486,6314,7570,9488,13042]\\
 \\
 Piano = [100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,\\
-1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000,\\
-3200,3400,3600,3900,4100,4400,4800,5300,5900,6900,8700,17300]\\
+1600,1700,1800,1900,2000,2100,2200,2300,2400,2511,2627,2727,2827,2966,3114,\\
+3238,3422,3624,3975,4281,4773,5417,6591,9191]\\
 \\
 以小提琴的頻帶切割點來看，訓練時所使用的子頻帶為
-(0-400Hz,\ 400-500Hz,\ $\dots$ ,\ 18000-22050Hz)，
-鋼琴的子頻帶為(0-100Hz,\ 100-200Hz,\ $\dots$ ,\ 17300-22050Hz)，
+(0-355Hz,\ 355-455Hz,\ $\dots$ ,\ 13042-22050Hz)共40個，
+鋼琴的子頻帶為(0-100Hz,\ 100-200Hz,\ $\dots$ ,\ 9191-22050Hz)共40個，
 在訓練BSRNN模型時我們將會套用上面兩個頻帶切割範圍做訓練。
+% 依照上述的切割比例我們得到兩種樂器的頻帶切割點為 \\
+% \\
+% Violin = [400,500,600,700,800,900,1000,1100,1200,1300,1500,1600,1700,1800,\\
+% 1900,2000,2100,2300,2400,2500,2600,2700,2800,2900,3000,3200,3400,3600,3800,\\
+% 4000,4200,4500,4800,5300,5800,6500,7400,8600,10400,13000,18000]\\
+% \\
+% Piano = [100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,\\
+% 1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000,\\
+% 3200,3400,3600,3900,4100,4400,4800,5300,5900,6900,8700,17300]\\
+% \\
+% 以小提琴的頻帶切割點來看，訓練時所使用的子頻帶為
+% (0-400Hz,\ 400-500Hz,\ $\dots$ ,\ 18000-22050Hz)，
+% 鋼琴的子頻帶為(0-100Hz,\ 100-200Hz,\ $\dots$ ,\ 17300-22050Hz)，
+% 在訓練BSRNN模型時我們將會套用上面兩個頻帶切割範圍做訓練。
 
 \pagebreak
 
@@ -143,7 +145,7 @@ Piano = [100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,\\
 本節將分成兩個部分說明，
 \ref{ch3-subst-DTW}節至\ref{ch3-subst-GBA}節
 會介紹實現音樂追蹤模組所使用到的演算法並詳細說明改進的部分，
-\ref{ch3-subst-data-manager}節至\ref{ch3-subst-decision-maker}
+\ref{ch3-subst-data-manager}節至\ref{ch3-subst-decision-maker}節
 會介紹每個元件的設計與改動。
 
 \subsection{動態時間規整(Dynamic Time Warping, DTW)} \label{ch3-subst-DTW}
@@ -151,7 +153,7 @@ DTW~\cite{Sakoe1978Dynamic}，
 是一種用來計算兩個時間序列資料之間相似度的方法。
 給定兩個時間序列
 $X = (x_1, x_2, \dots x_N), N \in \mathbb{N}$和
-$Y = (y_1, y_2, \dots y_M), M \in \mathbb{M}$，
+$Y = (y_1, y_2, \dots y_M), M \in \mathbb{N}$，
 其中N和M為兩個時間序列的長度，
 $x_N$和$y_M$是任兩個具有時間順序且形狀相似的資料，例如音樂、語音等等，
 如\cref{fig:fig-ch3-dtw-example}所示。
@@ -168,6 +170,7 @@ $x_N$和$y_M$是任兩個具有時間順序且形狀相似的資料，例如音�
 考慮到時間序列的長度不一定相等的情況，例如不同人演奏同一個音符可能會有不同的速度差異，
 因此DTW通常採用動態規劃的方法來計算相似度。
 
+DTW的計算方式如下，
 首先使用歐基里德距離\cref{eq:compute-dtw-cost-function}
 計算X與Y所有時間點的距離，
 \begin{equation}
@@ -176,7 +179,7 @@ $x_N$和$y_M$是任兩個具有時間順序且形狀相似的資料，例如音�
 \end{equation}
 
 並根據\cref{eq:compute-dtw-cost-matrix-function}
-使用動態規劃方式建立距離矩陣$D \in \mathbb{R}^{N \times M}$。
+使用動態規劃方式建立距離成本矩陣$D \in \mathbb{R}^{N \times M}$。
 \begin{align}
     \label{eq:compute-dtw-cost-matrix-function}
     \left\{
@@ -237,8 +240,10 @@ $x_N$和$y_M$是任兩個具有時間順序且形狀相似的資料，例如音�
     \label{fig:fig-ch3-dtw-path-example}
 \end{figure}
 
-本研究所使用的DTW演算法來自python librosa package~\cite{McFee2024librosa}
-中的librosa.sequence.dtw函式。
+本研究將DTW演算法應用在音樂偵測器元件(\cref{ch3-subst-music-detector})
+與即時音樂追蹤系統的評估上，
+我們使用python librosa package~\cite{McFee2024librosa}
+中的librosa.sequence.dtw函式實現。
 
 \subsection{線上動態時間規整(Online Dynamic Time Warping, ODTW)} \label{ch3-subst-ODTW}
 由於DTW演算法在時間複雜度上為$O(NM)$，屬於複雜度高的演算法，
@@ -254,16 +259,16 @@ ODTW~\cite{dixon2005ODTW}由Dixon等人提出，
 本研究實現ODTW演算法的步驟如下，
 給定兩個時間序列
 $X = (x_1, x_2, \dots x_N), N \in \mathbb{N}$和
-$Y = (y_1, y_2, \dots y_M), M \in \mathbb{M}$，
+$Y = (y_1, y_2, \dots y_M), M \in \mathbb{N}$，
 其中$X$為現場音訊，因此$N$會隨著串流時間長度而增加，直到串流結束，
 $Y$為事先給定的參考音訊，用於對齊現場音訊。
-我們想透過距離成本矩陣$D_{total}$找到$X$和$Y$的對齊路徑$W = (W_1, W_2, \dots W_k)$，
+我們想透過累積距離成本矩陣$D_{total}$找到$X$和$Y$的對齊路徑$W = (W_1, W_2, \dots W_k)$，
 其中每個$W_k$為有順序的$(i_k,j_k)$且
 $(i,j) \in W$代表兩段序列在$x_i$與$y_j$點上對齊。
 
-距離成本矩陣$D_{total}$透過\ref{ch3-subst-DTW}節所提到的\cref{eq:compute-dtw-cost-function}與
+$D_{total}$透過\ref{ch3-subst-DTW}節所提到的\cref{eq:compute-dtw-cost-function}與
 \cref{eq:compute-dtw-cost-matrix-function}計算，另外我們使用$D_{cell}$紀錄單格的距離成本$d$。
-我們定義搜尋範圍$c=450$來限制$D_{total}$與$D_{cell}$的大小，
+我們定義搜尋範圍$c=450$($\sim 9$秒)來限制$D_{total}$與$D_{cell}$的大小，
 當有新的$i$加入時，我們計算$d(i, j-c), d(i, j-c+1) \dots d(i, j+c)$個點，
 此時$j$為目前演算法計算到的參考音訊時間點，而對於$j$點，
 則是計算$d(i-c, j), d(i-c+1, j) \dots d(i, j)$，
@@ -307,7 +312,7 @@ $(i,j) \in W$代表兩段序列在$x_i$與$y_j$點上對齊。
 \end{figure}
 
 由於我們的$i$為現場串流音訊的時間點，並不會有回溯的情況發生，
-我們需要知道的是在$i$時間點時，參考音訊的對齊位置$output_j$
+我們需要知道的是在$i$時間點時，參考音訊的對齊位置$output_j$，
 因此我們將計算輸出對齊的的方法稍作修改。
 首先我們設定兩個參數$L_{upper}$與$L_{lower}$，
 如\cref{table:table-odtw-compute-outputj-parameter-setting}所示，
@@ -406,7 +411,8 @@ $L_{upper}$的設定為可調整的，此數值大約允許現場音訊比參考
 在線上處理階段啟動前與啟動後，
 我們對非串流音訊(參考音訊、伴奏音訊)與串流音訊(現場音訊)
 擷取兩種特徵作為其他元件的輸入資料，
-分別為高解析度特徵與低解析度特徵，高解析度特徵為梅爾頻譜特徵(Mel Spectrogram)，
+分別為高解析度特徵與低解析度特徵，
+高解析度特徵為梅爾頻譜特徵(Mel Spectrogram)\cite{abdul2022mel}，
 低解析度特徵為高解析度特徵對時間軸卷積後的重新採樣。
 為了管理音訊特徵的處理與傳送，
 我們設計了資料管理者來集中管理音樂追蹤模組中所有用到的音訊特徵。
@@ -420,15 +426,11 @@ STFT的參數設定如\cref{table:table-stft-parameter-setting}所示。
     \centering
     \caption{STFT 參數設定}
     \label{table:table-stft-parameter-setting}
-    \begin{tabular}{|c|c|}
+    \begin{tabular}{|c|c|c|c|}
         \hline
-        \multicolumn{1}{|c|}{Window size} & \multicolumn{1}{|c|}{46ms ($\sim 2029$ frames)}\\
+        \multicolumn{1}{|c|}{Window size} & \multicolumn{1}{|c|}{Hop size} & \multicolumn{1}{|c|}{Number of fft} & \multicolumn{1}{|c|}{Window function}\\
         \hline
-        Hop size & 20ms ($\sim 882$ frames)\\
-        \hline
-        Number of fft & 46ms ($\sim 2029$ frames)\\
-        \hline
-        Window function & Hanning \\
+        46ms ($\sim 2028$ frames) & 20ms ($\sim 882$ frames) & 46ms ($\sim 2028$ frames) & Hanning\\
         \hline
     \end{tabular}
 \end{table}
@@ -436,7 +438,7 @@ STFT的參數設定如\cref{table:table-stft-parameter-setting}所示。
 為了使特徵更接近人類的聽覺系統，
 我們對STFT頻譜圖做梅爾頻譜分析，得到高解析度特徵。
 梅爾頻譜是根據人耳對聲音的敏感度所設計的一種時頻分析方式，
-而梅爾頻譜就是由梅爾濾波器組(Mel Filter Bank)與STFT頻譜圖矩陣相乘後得到的結果，
+而梅爾頻譜是由梅爾濾波器組(Mel Filter Bank)與STFT頻譜圖矩陣相乘後得到的結果，
 梅爾頻譜圖的參數設定如下\cref{table:table-high-resolution-feature-parameter-setting}所示，
 n\_mel為濾波器數量，$f_{min}$與$f_{max}$為使用率波器的頻率範圍，
 代表梅爾頻譜特徵在0-8000 Hz使用了84個濾波器將此頻率範圍壓縮成更接近人耳所聽到的樣子。
@@ -445,51 +447,48 @@ n\_mel為濾波器數量，$f_{min}$與$f_{max}$為使用率波器的頻率範�
     \centering
     \caption{高解析度特徵 參數設定}
     \label{table:table-high-resolution-feature-parameter-setting}
-    \begin{tabular}{|c|c|}
+    \begin{tabular}{|c|c|c|}
         \hline
-        \multicolumn{1}{|c|}{n\_mels} & \multicolumn{1}{|c|}{84}\\
+        \multicolumn{1}{|c|}{n\_mels} & \multicolumn{1}{|c|}{$f_{min}$} & \multicolumn{1}{|c|}{$f_{max}$}\\
         \hline
-        Number of fft & 46ms ($\sim 2029$ frames)\\
-        \hline
-        $f_{min}$ & 0 Hz \\
-        \hline
-        $f_{max}$ & 8000 Hz \\
+        84 & 0 Hz & 8000 Hz\\
         \hline
     \end{tabular}
 \end{table}
 
 低解析度特徵由前面所提到的高解析度特徵對時間軸進行卷積，
 參數設定如\cref{table:table-low-resolution-feature-parameter-setting}所示，
-將每個window size的高解析度特徵窗與window function做卷積
+將每個Window size的高解析度特徵窗與Window function做卷積
 並取平均值代表此低解析度特徵時間點的頻率份量。
 
 \begin{table}[h]
     \centering
     \caption{低解析度特徵 參數設定}
     \label{table:table-low-resolution-feature-parameter-setting}
-    \begin{tabular}{|c|c|}
+    \begin{tabular}{|c|c|c|}
         \hline
-        \multicolumn{1}{|c|}{Window size} & \multicolumn{1}{|c|}{600ms ($\sim 30$ frames)}\\
+        \multicolumn{1}{|c|}{Window size} & \multicolumn{1}{|c|}{Hop size} & \multicolumn{1}{|c|}{Window function}\\
         \hline
-        Hop size & 300ms ($\sim 15$ frames)\\
-        \hline
-        Window function & Hanning \\
+        600ms ($\sim 30$ frames) & 300ms ($\sim 15$ frames) & Hanning \\
         \hline
     \end{tabular}
 \end{table}
 
-追蹤系統啟動後，音訊以單聲道、每次傳送與STFT的window size一樣大的樣本至串流音訊到系統，
-對於串流音訊的特徵處理方法與上述相同，但由於在處理特徵時我們有設定特徵的window size，
+追蹤系統啟動後，音訊以單聲道、樣本數為Window size的大小傳送串流音訊到系統，
+對於串流音訊的特徵處理方法與上述相同，
+但由於在接收音訊時並不像非串流音訊一樣直接拿到整段音訊，
 因此必須確保接收到足夠的樣本數才能擷取特徵，否則可能導致特徵蒐集不完全而失真。
 因此當系統啟動後，我們將現場音訊記錄下來，當音訊累積足夠的長度時再擷取高/低解析度特徵。
 % 由於我們的高解析度特徵的window size大小為46ms，因此會造成系統可能有約46ms的延遲，
 % 但在結果的呈現上，並不會影響太多。
 
 \cref{fig:fig-ch3-feature}為現場音訊與參考音訊之特徵圖，
-可以看到現場音訊雖然是以frame為單位處理特徵，但將特徵合併後並沒有任何雜訊，
-另外可以看到高解析度特徵的時間軸切片較細，低解析度特徵的時間軸切片較粗。
+可以看到高解析度特徵(左圖)的時間軸切片較細，低解析度特徵(右圖)的時間軸切片較粗。
+另外現場音訊雖然是以Window size大小處理特徵，
+但當追蹤結束時，可以現場音訊特徵與使用整段音訊做特徵擷取的參考音訊特徵，
+在視覺化上並沒有任何差異(無特徵失真的現象)。
 
-\begin{figure}[!hbt]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\linewidth]{ch3/fig-feature.png}
     \caption{上：現場音訊的高(左) / 低(右)解析度特徵圖；下：參考音訊的高(左) / 低(右)解析度特徵圖}
@@ -497,7 +496,7 @@ n\_mel為濾波器數量，$f_{min}$與$f_{max}$為使用率波器的頻率範�
 \end{figure}
 
 \subsection{音樂偵測器元件(Music Detector Block)} \label{ch3-subst-music-detector}
-音樂偵測器為負責偵測使用者開始演奏的時間並觸發後面元件的process，
+音樂偵測器負責偵測使用者開始演奏的時間並觸發後面元件執行，
 我們實作了平均振幅的閥值判斷並參考~\cite{Lin2020AHumanComputerDuetSystem}
 的DTW對齊成本閥值判斷方法來實現。
 
@@ -505,21 +504,22 @@ n\_mel為濾波器數量，$f_{min}$與$f_{max}$為使用率波器的頻率範�
 我們計算平均振幅並根據事先定義的閥值$\theta _{A}$判斷此片段是否為靜音片段，
 振幅平均值的計算公式如\cref{eq:avarage-amplitude-function}所示，
 $N$為整段音訊的樣本數，$| x[n] \vert$為音訊第n個樣本的絕對值，
-A為振幅平均值。
+$A$為振幅平均值。
 \begin{equation}
     \label{eq:avarage-amplitude-function}
     A = \frac{1}{N} \sum _{n=1}^{N} | x[n] \vert 
 \end{equation}
-$\theta _{A}$的值是透過統計的方式來決定設定的值，
+$\theta _{A}$是透過統計的方式來決定設定的值，
 我們使用已標記音樂開始時間的音訊來一一測試，
 已標記的音訊是使用自己錄製的音檔來測試，
 我們透過測量每一首的音樂開始時間的振幅值與音樂尚未開始時間的振幅值，
 並將音樂開始時間的振幅值加總後取平均獲得，最後我們將$\theta _{A}$設為0.01。
 
 \cref{eq:amplitude-threshold-cases}為平均振幅與閥值的條件判斷公式，
-當$A \leq \theta _{A}$時，代表此片段為靜音片段，因此直接回頭計算新的音訊的平均振幅，
+當$A \leq \theta _{A}$時，代表此片段為靜音片段，因此不考慮音樂開始的可能性，
+接著計算下一段音訊的平均振幅，
 當$A > \theta _{A}$時，代表此片段為非靜音片段，可能為音樂開始的地方，
-因此將此片段接著使用DTW對齊成本閥值判斷方法。
+因此將此片段接著使用DTW對齊成本閥值判斷方法計算。
 
 \begin{equation} 
     \label{eq:amplitude-threshold-cases}
@@ -529,18 +529,20 @@ $\theta _{A}$的值是透過統計的方式來決定設定的值，
     \end{cases}
 \end{equation}
 
-DTW對齊成本閥值判斷方法我們參考~\cite{Lin2020AHumanComputerDuetSystem}
-，當現場音訊通過平均振幅閥值的判斷後，
+另外平均振幅閥值判斷方法也用在最後演奏完畢的判斷上，
+若超過3秒以上為靜音片段則判斷為演奏結束。
+
+DTW對齊成本閥值判斷方法的實現如下，當現場音訊通過平均振幅閥值的判斷後，
 我們將音訊擷取為高解析度特徵並與參考音訊開頭0.5秒的高解析度特徵
 計算DTW對齊成本${DTW_{cost}}$。
 若${DTW_{cost}}$小於設定好的閥值$\theta _{cost}$，
-音樂偵測器就會觸發追蹤事件(觸發負責追蹤的processes)。
-$\theta _{cost}$的值與上述提到$\theta _{A}$的設定方法一樣為統計的方式，
+音樂偵測器就會觸發追蹤事件(觸發粗略估計位置與決策決定者元件)。
+$\theta _{cost}$與上述提到$\theta _{A}$的設定方法一樣為統計的方式，
 我們將$\theta _{cost}$設為2000。
 
 \cref{eq:DTW-cost-threshold-cases}為DTW對齊成本與閥值的條件判斷公式，
 當$DTW_{cost} \geq \theta _{cost}$時，認定此兩段音訊的相似度不足，
-因此不觸發後面的元件並回頭計算新的音訊的平均振幅，
+因此不觸發後面的元件並接著計算下一段音訊的平均振幅，
 當$DTW_{cost}  < \theta _{cost}$時，認定此兩段音訊具有足夠的相似度被認定為音樂開始的片段，
 因此觸發後面的元件並關閉自己的process。
 \begin{equation}
@@ -565,7 +567,7 @@ $t$為最新的低解析度特徵時間點。
 $N$為$Ref_{low}$的時間長度。
 \cref{eq:RPE-Distance-cost-function}
 表示在現場與參考的時間點為$[t, n]$時兩個低解析度特徵的距離。
-\cref{fig:fig-ch3-RPE-cost-matrix}為實際計算出來的$D_{RPE}$，
+\cref{fig:fig-ch3-RPE-cost-matrix}為距離成本矩陣$D_{RPE}$的熱力圖，
 越亮的地方代表兩格特徵距離越遠。
 \begin{equation}
     \label{eq:RPE-Distance-cost-function}
@@ -634,25 +636,33 @@ GBA threads會接收來自粗略位置估計器所計算出來的輸出位置
 並使用ODTW的距離成本矩陣$D_{total}$計算GBA結果，
 為了不讓粗略位置估計器完全控制輸出結果，
 我們將目前ODTW計算出來的輸出位置$output_j$
-與$(output_j\pm 15, 30, 45)$一併加入GBA threads計算最終輸出位置。
+與$(output_j\pm 15, 30, 45)$共7個點一併加入GBA threads計算最終輸出位置。
 我們將$GBA_{t}$設為15秒($\sim 750$\ high feature frames)，
 每個預計輸出位置將會向後計算15秒的最小路徑成本並選出成本最小的位置作為最後輸出。
 
-\cref{fig:fig-ch3-desicion-maker-output}為ODTW的累積距離成本圖與決策決定者的輸出路徑，
-我們也將粗略位置估計器的輸出位置(黃色點)結果與ODTW加入預計輸出的位置(桃紅色點)顯示在上面。
-為了瞭解決策決定者的輸出路徑是否有偏差，我們將DTW的輸出路徑(淺藍)呈現在
-\cref{fig:fig-ch3-offline-and-online-path}，並將決策決定者的輸出路徑(綠色)疊加在上面，
-可以看到幾乎是與DTW的路徑重疊，代表此系統在即時對齊的能力與DTW離線對齊的能力相當。
+\cref{fig:fig-ch3-desicion-maker-output}為決策決定者輸出的熱力圖與相關元件的輸出點，
+綠色點為ODTW計算的輸出點，
+黃色點與桃紅色點分別為粗略位置估計器與ODTW計算出來的候選輸出點，
+GBA threads會計算黃色點與桃紅色點的向後對齊成本，
+淺藍色點為GBA計算完後決定的輸出位置。
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\linewidth]{ch3/fig-desicion-maker-output.png}
-    \caption{決策決定者計算的輸出點：\ 淺藍：GBA計算的最後輸出位置\ 綠色：ODTW計算的最後輸出位置}
+    \includegraphics[width=0.7\linewidth]{ch3/fig-desicion-maker-output.png}
+    \caption{追蹤結束後決策決定者輸出的熱力圖與相關元件的輸出點}
     \label{fig:fig-ch3-desicion-maker-output}
 \end{figure}
+
+為了瞭解即時音樂追蹤系統的輸出路徑是否有偏差，我們在追蹤結束後，
+使用DTW計算相同兩段音訊的輸出路徑(淺藍色點)
+，並將系統的輸出路徑(綠色點)與DTW輸出路徑畫在DTW的累積成本矩陣熱力圖上，
+如\cref{fig:fig-ch3-offline-and-online-path}所示。
+可以看到系統輸出路徑與DTW的路徑在大部分的時間點都是重疊的，
+代表此系統在即時對齊的能力與DTW離線對齊的能力相當。
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\linewidth]{ch3/fig-offline-and-online-path.png}
-    \caption{DTW與音樂追蹤模組的輸出路徑比較圖}
+    \caption{DTW與系統的輸出路徑比較圖}
     \label{fig:fig-ch3-offline-and-online-path}
 \end{figure}
 

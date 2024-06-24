@@ -109,7 +109,7 @@
 模型在當時在公開資料集MUSDB~\cite{Rafii2017musdb18}上表現最佳，
 此模型使用三層雙向LSTM對輸入預測一個遮罩，將混合音訊透過遮罩得到分離音源頻譜圖。
 隨後在2022年由Luo Yi等人所提出的Band-Split RNN~\cite{Luo_Yi2022MusicSourceSeparation}
-在MUSDB上取得最佳的SDR成績，此模型將輸入的頻譜圖分割為預先定義好頻帶寬度的子帶頻譜圖，
+在MUSDB上取得最佳的成績，此模型將輸入的頻譜圖分割為預先定義好頻帶寬度的子帶頻譜圖，
 將子帶頻譜圖轉為相同維度的特徵後利用堆疊RNN交錯訓練，
 最後經過多層感知機(Multilayer Perceptron, MLP)
 生成遮罩並與混合輸入結合產生分離音源頻譜圖，
@@ -125,7 +125,7 @@ Encoder與Decoder使用Skip U-net連接，將混合立體音訊作為輸入，�
 由Meta AI提出的冠軍模型Hybrid Demucs~\cite{defossez2021hybrid}更是將Demucs擴展為多域分析的架構，
 模型變為由波型、頻譜和共享層組成。2022年Meta AI結合先前的結果提出了
 Hybrid Transformers~\cite{rouard2023hybrid}，將Encoder/Decoder內部兩層替換為跨域Transformer，
-使的模型可以接受異質資料，變成更靈活的架構，並在MUSDB的SDR表現上為9.20dB，
+使的模型可以接受異質資料，變成更靈活的架構，2023年在MUSDB上取得最佳的成績，
 為目前所有開源模型中最佳的模型。
 
 在古典樂器錄音的音源分離研究中，
@@ -136,7 +136,7 @@ Hybrid Transformers~\cite{rouard2023hybrid}，將Encoder/Decoder內部兩層替�
 由Miron等人提出的CNN-based低延遲單聲道源分離模型~\cite{miron2017generating}，
 透過改變速度、音色、動態時間局部變化來增加新的訓練資料，使模型在實際情況下更能應對演奏時的狀況。
 由Chiu Ching Yu等人提出針對資料規模小的資料集的資料增強方法~\cite{Chiu_ChingYu2020MixingSpecific}，
-使用Open-Unmix模型訓練並在針對小提琴與鋼琴的混合音源分離的任務上，
+使用Open-Unmix模型作為架構提出Aug4mss模型，並在針對小提琴與鋼琴的混合音源分離的任務上，
 比當時可用的最佳模型Spleeter~\cite{hennequin2020spleeter}的效果要好。
 
 本研究將使用靈活性高且較輕量的Band-Split RNN~\cite{Luo_Yi2022MusicSourceSeparation}模型，
@@ -150,7 +150,8 @@ Hybrid Transformers~\cite{rouard2023hybrid}，將Encoder/Decoder內部兩層替�
 本節專注探討以音訊特徵為主的即時音樂追蹤方法與應用的相關研究。
 
 音樂追蹤的方法包含隱藏馬爾科夫模型(Hidden Markov Model, HMM)~\cite{cano1999score}，
-HMM透過樂譜中的狀態迭帶訓練目前追蹤的位置，但也因為需要大量標註過的資料，在即時表現方面較為遜色；
+HMM透過特徵觀察每個狀態的機率迭帶訓練更新目前追蹤的位置，但由於HMM依賴於離散空間來表示樂譜的音符與節奏，
+因此不適合處理複雜的連續變化，且因為計算複雜性高，在即時表現方面較為遜色；
 動態時間規整(Dynamic Time Warping, DTW)~\cite{Arzt2012Adaptive, Raffel2016Optimizing}為最多人使用的方法之一，
 DTW透過計算兩段相似序列的成本矩陣，回推兩段音訊的最佳對齊點，
 由於音樂的連續性使的DTW計算結果準確率高，
@@ -164,10 +165,12 @@ PDTW將兩個時間序列分割成多段的序列，每段序列各自計算DTW�
 ODTW不需要事先取得兩段序列的資訊，
 而是根據每個時間點計算出的路徑決定下一步的方向，
 因此ODTW在即時音訊的處理的情況會比前面提到的方法還要快速，
-更能達到即時音樂追蹤的效果，但也因為結束的位置並不是事先定義好的
+更能達到即時音樂追蹤的效果，但也因為無法確定哪個位置為音訊結束的位置，
 ，因此通常追蹤的準確率會比DTW要低。
 
-音樂追蹤使用的音訊特徵通常越相像越好，例如使用同一人事先演奏的音訊來追蹤同一人的現場演奏，
+音訊特徵的音樂追蹤比起使用MIDI檔案的音樂追蹤要困難許多，
+因為追蹤結果對特徵的變化非常敏感，因此使用的音訊特徵通常越相像越好，
+例如使用同一人事先演奏的音訊來追蹤同一人的現場演奏，
 但通常使用者並不會特意去錄製事先演奏的音訊，尤其是在沒有合奏者的情況下，
 因此本研究致力於研究使用不同音訊特徵來追蹤現場演奏的即時音樂追蹤系統。
 本研究將基於~\cite{Lin2020AHumanComputerDuetSystem}所提出的架構進行重新實現

@@ -203,7 +203,7 @@ DTW的計算方式如下，
     \item 連續性：若路徑的上一個對齊點為$(i, j)$， 
     下一個對齊點只能是$(i+1, j+1), (i+1, j), (i, j+1)$
     \item 單調性：若路徑的上一個對齊點為$(i, j)$，
-    下一個對齊點必須為$(i_{next}, j_{next}) \in (i_{next} \geq i, j_{next} \geq j)$
+    下一個對齊點必須為$(i_{next}, j_{next}) \in (i_{next} \geq i,\ j_{next} \geq j)$
 \end{enumerate}
 
 這是為了使回溯的路徑為連續無倒退且整段序列都被包含在輸出裡，確保對齊的一致性。
@@ -252,10 +252,19 @@ DTW演算法在計算就會花費許多時間。
 
 ODTW~\cite{dixon2005ODTW}由Dixon等人提出，
 是基於DTW演算法所做的改良，首先ODTW在計算對齊路徑時並不是回溯計算而是向前增量計算，
-並且將計算距離成本的範圍縮小至預先定義的範圍$c$，
+並且將計算距離成本的範圍縮小至預先定義的常數範圍$c$，
 因此使ODTW在時間與空間複雜度的表現都是線性$O(N)$，
 且因為不需事先知道整個序列的資料，因此適合處理長序列音訊或即時串流音訊。
+計算路徑範例如\cref{fig:fig-ch3-conventional-odtw-path}所示。
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\linewidth]{ch3/fig-conventional-odtw-path.png}
+    \caption{ODTW 對齊路徑計算，擷取自~\cite{dixon2005ODTW}}
+    \label{fig:fig-ch3-conventional-odtw-path}
+\end{figure}
+
+我們將~\cite{dixon2005ODTW}提出的ODTW演算法稱為傳統ODTW演算法，並說明本研究改動的部分。
 本研究實現ODTW演算法的步驟如下，
 給定兩個時間序列
 $X = (x_1, x_2, \dots x_N), N \in \mathbb{N}$和
@@ -266,18 +275,27 @@ $Y$為事先給定的參考音訊，用於對齊現場音訊。
 其中每個$W_k$為有順序的$(i_k,j_k)$且
 $(i,j) \in W$代表兩段序列在$x_i$與$y_j$點上對齊。
 
-$D_{total}$透過\ref{ch3-subst-DTW}節所提到的\cref{eq:compute-dtw-cost-function}與
-\cref{eq:compute-dtw-cost-matrix-function}計算，另外我們使用$D_{cell}$紀錄單格的距離成本$d$。
-我們定義搜尋範圍$c=450$($\sim 9$秒)來限制$D_{total}$與$D_{cell}$的大小，
-當有新的$i$加入時，我們計算$d(i, j-c), d(i, j-c+1) \dots d(i, j+c)$個點，
-此時$j$為目前演算法計算到的參考音訊時間點，而對於$j$點，
-則是計算$d(i-c, j), d(i-c+1, j) \dots d(i, j)$，
-由於我們無法得知未來的現場音訊，所以只能計算到目前最新的時間點$i$。
-上述的計算方式與傳統的ODTW演算法有些微的不同，
-在~\cite{dixon2005ODTW}中，每次迭帶時在$(i, j)$方向計算的格數皆為$c$個，
-我們將每次迭帶在j方向計算的cell個數改為$2c-1$，
-如範例\cref{fig:fig-ch3-odtw-search-range-compute-comparision}所示，
-假設每次迭帶的路徑皆為$(i+1, j+1)$，且搜尋範圍$c=2$，
+計算累積距離成本矩陣$D_{total}$的方式使用\ref{ch3-subst-DTW}節
+的\cref{eq:compute-dtw-cost-function}與\cref{eq:compute-dtw-cost-matrix-function}計算，
+並且也記錄單格距離成本矩陣$D_{cell}$。
+
+傳統ODTW演算法在計算兩種距離成本矩陣時，
+會根據目前的決定的方向(Row、Column或Both)決定計算的成本格數，
+關於如何決定方向會在後面作討論，我們先預設目前方向為Both，
+也就是計算新的$i$(Column)與新的$j$(Row)的成本矩陣，
+計算方式如下，
+當時間點固定為$i$時，計算$j$方向的距離成本$d(i, j-c+1), d(i, j-c+2) \dots d(i, j+1)$；
+當時間點固定為$j$時，計算$i$方向的距離成本$d(i-c+1, j), d(i-c+2, j) \dots d(i+1, j)$，
+在兩個方向上分別向前計算$c$格距離成本。
+
+由於本研究的即時音樂追蹤系統在現場音訊的時間點是嚴格單調遞增，
+我們想在現場音訊時間點為$i$時能取得更多參考音訊時間點的成本資訊，
+因此我們將時間點為$i$時所計算的$j$方向格數改為$2c-1$，
+當有新的$i$加入時，我們計算$d(i, j-c+1), d(i, j-c+2) \dots d(i, j+c-1)$個點，
+而對於$j$點，保持計算$d(i-c+1, j), d(i-c+2, j) \dots d(i+1, j)$。
+
+兩種不同的距離成本矩陣計算方式如範例\cref{fig:fig-ch3-odtw-search-range-compute-comparision}所示，
+假設每次迭帶的路徑方向皆為Both，且搜尋範圍$c=3$，
 我們與傳統ODTW不同之處為在$i$時間點時所看到的參考音訊點的數量多寡。
 \begin{figure}[H]
     \centering
@@ -285,13 +303,6 @@ $D_{total}$透過\ref{ch3-subst-DTW}節所提到的\cref{eq:compute-dtw-cost-fun
     \caption{每次迭帶所計算到的距離成本矩陣格數位置比較}
     \label{fig:fig-ch3-odtw-search-range-compute-comparision}
 \end{figure}
-
-會做這樣的更動是因為我們的$i$為現場串流音訊的時間點，
-而串流音訊並不會出現相同的時間點(輸出永遠為嚴格單調遞增)，
-且我們無法得知目前現場音訊的快慢，
-因此為了能讓最後輸出對齊位置時有更多的選擇，
-我們除了向前計算$(j-c \ \  \text{to} \ \  j)$，
-也向後計算$(j \ \  \text{to} \ \  j+c)$參考音訊的距離成本。
 
 計算完最新的$D_{total}$與$D_{cell}$後，
 % 解釋傳統ODTW計算方式
@@ -332,12 +343,15 @@ $D_{total}$透過\ref{ch3-subst-DTW}節所提到的\cref{eq:compute-dtw-cost-fun
 \end{table}
 $L_{upper}$的設定為可調整的，此數值大約允許現場音訊比參考音訊提前0.6秒，
 % $ODTW_{Max\_Run}$為參考傳統ODTW演算法中限制相同走向的參數，我們將$ODTW_{Max\_Run}$設定為3，
-另外考慮到現場音訊並不會突然往前跳回前面的位置，我們的$L_{lower}$不考慮小於$j$的位置，
-以免輸出偏差太大影響到往後的對齊。
+另外考慮到現場音訊並不會突然往前跳回前面的位置，只會有提前或落後的情況產生，
+因此我們的$L_{lower}$不考慮小於$j$的位置，
+若現場音訊目前落後，計算出來的輸出點就會停留在$j$點，
+以免輸出陷入局部最小值影響到後面的對齊。
 接著根據\cref{eq:odtw-output-function}計算輸出對齊點$(output_i, output_j)$，
 計算範圍如\cref{fig:fig-ch3-conventional-odtw-compute-output}所示。
 在現場音訊為$x$時，我們迭帶所有介於$L_{upper}$與$L_{lower}$的點$y$，
-找到一組累積成本值為最小的點，此點就是ODTW的輸出對齊點。
+找到一組$D_{total}$與$D_{cell}$相加為最小的點，此點就是ODTW的輸出對齊點，
+加入$D_{cell}$來計算是為了避免$D_{total}$的值誤判此點的相似度。
 
 \begin{equation} 
     \label{eq:odtw-output-function}
@@ -358,22 +372,42 @@ $L_{upper}$的設定為可調整的，此數值大約允許現場音訊比參考
 在計算完$(output_i, output_j)$後，
 傳統的ODTW演算法會根據目前的$(i, j)$與輸出的$(output_i, output_j)$
 決定下一步的走向$(i_{next}, j_{next})$以增加新的距離成本到兩個矩陣中，
-走向分別有$(i+1, j+1)$、$(i+1, j)$、$(i, j+1)$三種，
-首先當$i < c$時，為了使搜索範圍內的隔數都有計算到距離成本，因此會往$(i+1, j+1)$方向計算，
+走向分別有Both$(i+1, j+1)$、Column$(i+1, j)$、Row$(i, j+1)$三種，
+如\cref{fig:fig-ch3-conventional-odtw-decide-direction}所示，
+紅色箭頭所指的地方為$(i_{next}, j_{next})$。
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{ch3/fig-conventional-odtw-decide-direction.png}
+    \caption{傳統ODTW決定計算方向示意圖, $c=3$}
+    \label{fig:fig-ch3-conventional-odtw-decide-direction}
+\end{figure}
+首先當$i < c$時，為了使搜索範圍內的隔數都有計算到距離成本，因此計算Both方向
+(\cref{fig:fig-ch3-conventional-odtw-decide-direction}右下角)，
 當$i \geq  c$後，開始根據輸出的位置判斷走向，
-當$output_i < i$時，代表目前$i$方向輸出的點較慢，因此往方向$(i+1, j)$計算距離成本；
-當$output_j < j$時，代表目前$j$方向輸出的點較慢，因此往方向$(i, j+1)$計算距離成本；
-若目前$(output_i, output_j)$皆與$(i, j)$對齊，繼續往$(i+1, j+1)$方向計算新的距離成本。
+當$output_i < i$時，代表目前$i$方向輸出的點較慢，因此往方向Column計算距離成本
+(\cref{fig:fig-ch3-conventional-odtw-decide-direction}左上角)；
+當$output_j < j$時，代表目前$j$方向輸出的點較慢，因此往方向Row計算距離成本
+(\cref{fig:fig-ch3-conventional-odtw-decide-direction}右上角)；
+若目前$(output_i, output_j)$皆與$(i, j)$對齊，繼續往Both方向計算新的距離成本
+(\cref{fig:fig-ch3-conventional-odtw-decide-direction}左下角)。
 
-由於我們的$i$方向為現場音訊的時間點，並不會輸出$i+1$以外的輸出點(嚴格單調遞增)，
-且我們的輸出$output_j$並不是連續的，使用傳統的方法會可能造成錯誤的對齊，
-因此我們將增量對齊的方向改為全部採用$(i+1, j+1)$的方向計算，
+由於我們的$i$方向為現場音訊的時間點，$output_i$並不會輸出$i+1$以外的輸出點(嚴格單調遞增)，
+且輸出$output_j$並不是連續的，傳統ODTW的方法不適用於我們改動的輸出機制，
+因此我們將增量對齊的方向改為全部採用Both的方向計算，
 但當$i \geq  c$後，我們將目前的$j$設為$output_j$，使系統目前的$j$點保持與輸出相同的位置。
+如\cref{fig:fig-ch3-ours-odtw-decide-direction}所示。
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{ch3/fig-ours-odtw-decide-direction.png}
+    \caption{改動後ODTW決定計算方向示意圖, $c=3$}
+    \label{fig:fig-ch3-ours-odtw-decide-direction}
+\end{figure}
 
 \subsection{貪心向後對齊(Greedy Backward Alignment, GBA)} \label{ch3-subst-GBA}
 由於ODTW在對齊時為增量對齊，並不像DTW一樣在計算完兩段音訊的距離成本矩陣後才回溯最佳對齊路徑，
 因此通常ODTW的輸出結果會比DTW的輸出結果來的更不穩定。
-為了改善上述問題，我們參考~\cite{Arzt2010Towards}中的Greedy Local Search演算法
+為了改善上述問題，我們在追蹤啟動後一段時間加入此方法輔助系統計算輸出位置，
+我們參考~\cite{Arzt2010Towards}中的Greedy Local Search演算法
 來設計此方法，此方法配合多執行續的執行可以快速的計算目前位置的向後對齊成本。
 
 給定一個預計輸出位置$(i, j)$作為向後對齊的結尾點，
@@ -394,10 +428,18 @@ $L_{upper}$的設定為可調整的，此數值大約允許現場音訊比參考
 這是為了正規化總累積成本，
 使每個預計輸出位置在比較累積距離成本時能公平的比較，
 最後對齊成本計算公式如\cref{{eq:compute-backtracking-cost-function}}所示。
+範例圖如\cref{fig:fig-ch3-gba-compute-output}所示。
 \begin{equation}
     \label{eq:compute-backtracking-cost-function}
     W_{cost} = \frac{\sum_{w = (i_{start}, j_{start})}^{(i, j)}D_{total}(w)}{step_{total}} 
 \end{equation}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{ch3/fig-gba-compute-output.png}
+    \caption{GBA計算$W_{cost}示意圖$}
+    \label{fig:fig-ch3-gba-compute-output}
+\end{figure}
 
 % 解釋為何需要、
 % 從候選位置中挑選最好的path、
@@ -578,13 +620,13 @@ $N$為$Ref_{low}$的時間長度。
 \begin{figure}[H]
     \centering
     \includegraphics[width=\linewidth]{ch3/fig-RPE-cost-matrix.png}
-    \caption{粗略位置估計器的距離矩陣熱力圖}
+    \caption{粗略位置估計器的距離成本矩陣熱力圖}
     \label{fig:fig-ch3-RPE-cost-matrix}
 \end{figure}
 
 當$D_{RPE}$累積現場9秒($\sim 30$\ low feature frames)的資訊後，
 使用GBA計算時間點$t$時$Ref_{low}$
-所有時間點向後對齊9秒的最小路徑成本矩陣$C_{RPE} \in \mathbb{R}^{1 \times N}$，
+所有時間點向後對齊9秒($GBA_t = 30$\ frames)的最小路徑成本矩陣$C_{RPE} \in \mathbb{R}^{1 \times N}$，
 我們將粗略位置估計器的$GBA_{Max\_Run}$設定為3，
 當最小路徑成本值越小，代表此參考點與目前現場位置的相似度越高，
 因此我們對$C_{RPE}$做Min-Max資料正規化，公式如\cref{eq:RPE-Min-Max-normalization-function}所示，
@@ -629,6 +671,7 @@ $N$為$Ref_{low}$的時間長度。
 ，並與參考高解析度特徵$Ref_{high} \in \mathbb{R}^{N \times F}$
 計算兩種距離矩陣$D_{cell} \in \mathbb{R}^{t \times N}$與
 $D_{total} \in \mathbb{R}^{t \times N}$，
+我們定義搜尋範圍$c=450$($\sim 9$秒)來限制$D_{total}$與$D_{cell}$的大小，
 ODTW的計算方式與參數設定如\ref{ch3-subst-ODTW}節所示，
 若目前沒有粗略位置估計器的輸出位置需要加入候選，則輸出ODTW所計算出來的對齊位置。
 

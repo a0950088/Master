@@ -152,12 +152,12 @@ Hybrid Transformers~\cite{rouard2023hybrid}，將Encoder/Decoder內部兩層替�
 音樂追蹤的方法包含隱藏馬爾科夫模型(Hidden Markov Model, HMM)~\cite{cano1999score}，
 HMM透過特徵觀察每個狀態的機率迭帶訓練更新目前追蹤的位置，但由於HMM依賴於離散空間來表示樂譜的音符與節奏，
 因此不適合處理複雜的連續變化，且因為計算複雜性高，在即時表現方面較為遜色；
-動態時間規整(Dynamic Time Warping, DTW)~\cite{Arzt2012Adaptive, Raffel2016Optimizing}為最多人使用的方法之一，
+動態時間規整(Dynamic Time Warping, DTW)~\cite{Sakoe1978Dynamic, Arzt2012Adaptive}，
 DTW透過計算兩段相似序列的成本矩陣，回推兩段音訊的最佳對齊點，
 由於音樂的連續性使的DTW計算結果準確率高，
 但也因為計算時間複雜度高而無法應用在即時的音樂追蹤。
 因此許多人對DTW演算法改良了更快速的版本，
-例如平行化動態時間規整(Parallel Dynamic Time Warping, PDTW)~\cite{Wei2018Online}，
+例如平行化動態時間規整(Parallel Dynamic Time Warping, PDTW)~\cite{takahashi2009parallelized, Wei2018Online}，
 PDTW將兩個時間序列分割成多段的序列，每段序列各自計算DTW，計算完畢後再將每段序列連接回整段，
 加速DTW的運算時間；
 線上動態時間規整(Online Dynamic Time Warping, ODTW)~\cite{dixon2005ODTW, Arzt2010Towards, Lin2020AHumanComputerDuetSystem}
@@ -166,7 +166,7 @@ ODTW不需要事先取得兩段序列的資訊，
 而是根據每個時間點計算出的路徑決定下一步的方向，
 因此ODTW在即時音訊的處理的情況會比前面提到的方法還要快速，
 更能達到即時音樂追蹤的效果，但也因為無法確定哪個位置為音訊結束的位置，
-，因此通常追蹤的準確率會比DTW要低。
+因此通常追蹤的準確率會比DTW要低。
 
 音訊特徵的音樂追蹤比起使用MIDI檔案的音樂追蹤要困難許多，
 因為追蹤結果對特徵的變化非常敏感，因此使用的音訊特徵通常越相像越好，

@@ -44,7 +44,7 @@ Bach Violin Dataset為整合了高品質公開錄音的巴赫小提琴獨奏奏�
         \hline
         \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{小提琴音源} & \multicolumn{1}{|c|}{鋼琴音源} \\
         \hline
-        總時長 & 5hr 24min 47sec & 5hr 6min 37sec \\
+        總時長 & 5hr 24min 47sec & 5hr 23min 11sec \\
         \hline
         Channel & Mono & Mono \\
         \hline
@@ -61,19 +61,38 @@ Bach Violin Dataset為整合了高品質公開錄音的巴赫小提琴獨奏奏�
     \label{table:table-ours-splited-dataset}
     \begin{tabular}{|c|c|c|}
         \hline
-        \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{小提琴} & \multicolumn{1}{|c|}{鋼琴} \\
+        \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{小提琴音源} & \multicolumn{1}{|c|}{鋼琴音源} \\
         \hline
-        訓練集 & 4hr & 4hr \\
+        訓練集 & 4hr 22min 52sec & 4hr 22min 32sec \\
         \hline
-        驗證集 & 1hr 6min 37sec & 1hr 24min 47sec\\
+        驗證集 & 1hr 1min 12sec & 1hr 39sec \\
         \hline
     \end{tabular}
 \end{table}
 
 測試資料集我們採用Aug4mss
 提供的公開整合測試資料集進行評估，
-此資料集是從公開資料集MedleyDB~\cite{Bittner2014MedleyDB}中特別
-挑選出小提琴與鋼琴的錄音所製作的測試資料集。
+此資料集是從公開資料集MedleyDB~\cite{Bittner2014MedleyDB}中
+挑選出小提琴與鋼琴的錄音所製作的測試資料集，
+測試資料集的格式如\cref{table:table-test-dataset}所示。
+\begin{table}[H]
+    \centering
+    \caption{測試資料集}
+    \label{table:table-test-dataset}
+    \begin{tabular}{|c|c|}
+        \hline
+        \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{混合音源} \\
+        \hline
+        總時長 & 2hr 59min 35sec \\
+        \hline
+        Channel & Mono \\
+        \hline
+        音訊格式 & WAV \\
+        \hline
+    \end{tabular}
+\end{table}
+
+訓練、驗證、測試資料集皆可從此連結~\cite{YuJieLin2024MSSDataset}查看。
 
 % \colorbox{yellow}{放資料集的連結?}
 
@@ -88,7 +107,7 @@ $N$為在模型訓練過程中，每次迭帶從每種樂器的資料集隨機�
 每對資料皆為10秒鐘的混合音訊。
 我們將針對上述兩種情況做測試。
 訓練與驗證的資料筆數$N$如\cref{table:table-training-dataset-split}所示，
-random seed皆設定為42，確保兩個模型訓練時所拿到的資料為一致的。
+Random seed設定為42，確保兩個模型訓練時所拿到的資料為一致的。
 \begin{table}[h]
     \centering
     \caption{每次迭帶的訓練與驗證資料筆數}
@@ -97,17 +116,57 @@ random seed皆設定為42，確保兩個模型訓練時所拿到的資料為一�
         \hline
         \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{Data-limit} & \multicolumn{1}{|c|}{Data-rich} \\
         \hline
-        \textbf{訓練}資料混合筆數 & 250 pairs & 2000 pairs \\
+        \textbf{訓練}資料混合筆數 & N = 250 pairs & N = 2000 pairs \\
         \hline
-        \textbf{驗證}資料混合筆數 & \multicolumn{2}{|c|}{100 pairs} \\
+        \textbf{驗證}資料混合筆數 & \multicolumn{2}{|c|}{N = 100 pairs} \\
+        \hline
+        Random seed & \multicolumn{2}{|c|}{42} \\
         \hline
     \end{tabular}
 \end{table}
 
-所有訓練與測試的資料皆為44100Hz取樣率的單聲道音訊，
-特徵採樣參數STFT Window size為2048，Hop size為512，並保留原始模型的設定參數。
-模型訓練所使用的顯示卡為GeForce RTX™ 3080 Ti，
-CPU為11th Gen Intel(R) Core(TM) i7-11700K @ 3.60GHz。
+資料讀取與特徵擷取的參數如\cref{table:table-data-load-parameters}所示。
+\begin{table}[H]
+    \centering
+    \caption{資料讀取與特徵擷取參數}
+    \label{table:table-data-load-parameters}
+    \begin{tabular}{|c|c|c|}
+        \hline
+        \multicolumn{1}{|c|}{取樣率} & \multicolumn{1}{|c|}{44100Hz} \\
+        \hline
+        STFT window size & 2048 \\
+        \hline
+        STFT hop size & 512 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+兩個模型的訓練參數如\cref{table:table-training-parameters}所示，
+\begin{table}[H]
+    \centering
+    \caption{模型訓練參數}
+    \label{table:table-training-parameters}
+    \begin{tabular}{|c|c|c|}
+        \hline
+        \multicolumn{1}{|c|}{套件} & \multicolumn{1}{|c|}{PyTorch} \\
+        \hline
+        Epoch & 250 \\
+        \hline
+        Optimizer & Adam \\
+        \hline
+        Learning rate & 1e-3 \\
+        \hline
+        Batch size & 2 \\
+        \hline
+        Number of workers & 8 \\
+        \hline
+        GPU & GeForce RTX™ 3080 Ti \\
+        \hline
+        CPU & 11th Gen Intel(R) Core(TM) i7-11700K @ 3.60GHz \\
+        \hline
+    \end{tabular}
+\end{table}
+
 
 \subsection{音源分離評估指標}
 我們使用~\cite{Luo_Yi2022MusicSourceSeparation}中的兩種評估指標來評估模型，
@@ -271,7 +330,11 @@ V7、小提琴、鋼琴的子頻帶數皆為40個，
 
 當目標樂器為小提琴時，我們使用小提琴的頻帶切割範圍的訓練結果雖然在cSDR指標並不是最高，
 但在uSDR的表現上為最佳，優於使用鋼琴範圍與V7範圍的結果，
-我認為可能是我們使用的估計頻帶資料多樣性太少，未來可以篩選不同曲風的小提琴音訊作為估計資料。
+我認為可能的原因如下，首先鋼琴音訊通常是多聲部的呈現，
+一首鋼琴音訊通常可獲得的頻率資訊會比一首小提琴音訊要來的多，
+且鋼琴與小提琴的音域有重疊的部分，小提琴的音域是包含在鋼琴音域中的，
+因此可能使鋼琴頻帶切割範圍估計的比小提琴還要好，導致模型訓練時獲得較好的特徵。
+可透過加入更多不同曲風的小提琴音訊資料增加多樣性，提升估計頻帶的效果。
 當目標樂器為鋼琴時，我們使用鋼琴的頻帶切割範圍的訓練結果優於使用小提琴範圍與V7範圍的結果，
 由此可見，我們所提出的頻帶分割估計方法在uSDR的結果上皆優於BSRNN提出的V7頻帶範圍，
 有助於提升音源分離的效果。
@@ -516,7 +579,28 @@ $| \Delta t\vert $為現場伴奏音訊的延遲。
 演奏時，為了保持演奏速度的平穩，我們皆使用節拍器來輔助，
 我們也演奏了自由速度版本，也就是不使用節拍器，與鋼琴互相配合演奏。
 在演奏時使用AKG C519 M 電容式麥克風收錄音訊，監聽耳機為Sony MDR 7506，
-並使用Focusrite Scarlett 2i2錄音介面處理類比與數位訊號。
+並使用Focusrite Scarlett 2i2錄音介面處理類比與數位訊號，
+硬體設備如\cref{fig:fig-ch4-hardware-device}所示。
+\begin{figure}[H]
+    %\captionsetup[subfigure]{labelformat=empty} % 完全隱藏圖號
+    \centering
+    \subcaptionbox
+    {Focusrite Scarlett 2i2錄音介面
+    \label{fig:fig-focusrite-scarlett-2i2}}
+    {\includegraphics[width=0.3\linewidth]{ch4/fig-focusrite-scarlett-2i2.jpg}}
+    ~
+    \subcaptionbox
+    {AKG C519 M 電容式麥克風
+    \label{fig:fig-AKG-C519M-mic}}
+    {\includegraphics[width=0.3\linewidth]{ch4/fig-AKG-C519M-mic.jpg}}
+    ~
+    \subcaptionbox
+    {Sony MDR 7506 監聽耳機
+    \label{fig:fig-Sony-MDR-7506}}
+    {\includegraphics[width=0.2\linewidth]{ch4/fig-Sony-MDR-7506.jpg}}
+    \caption{硬體設備}
+    \label{fig:fig-ch4-hardware-device}
+\end{figure}
 
 由於沒有正確的伴奏音訊(Ground truth)，因此我們無法使用\ref{ch4-subst-midi-tracking-results}節的方法來評估
 與正確伴奏音訊的延遲。
@@ -538,6 +622,11 @@ $| \Delta t\vert $為現場伴奏音訊的延遲。
     \centering
     \subcaptionbox
     {
+    \label{fig:mss-110bpm-feature}}
+    {\includegraphics[width=0.7\linewidth]{ch4/fig-mss-110bpm-feature.png}}
+    ~
+    \subcaptionbox
+    {
     \label{fig:mss-110bpm-tracking-output}}
     {\includegraphics[scale=0.36]{ch4/fig-mss-110bpm-tracking-system-output.png}}
     ~
@@ -557,6 +646,11 @@ $| \Delta t\vert $為現場伴奏音訊的延遲。
 \begin{figure}[H]
     %\captionsetup[subfigure]{labelformat=empty} % 完全隱藏圖號
     \centering
+    \subcaptionbox
+    {
+    \label{fig:mss-120bpm-feature}}
+    {\includegraphics[width=0.7\linewidth]{ch4/fig-mss-120bpm-feature.png}}
+    ~
     \subcaptionbox
     {
     \label{fig:mss-120bpm-tracking-output}}
@@ -581,6 +675,11 @@ $| \Delta t\vert $為現場伴奏音訊的延遲。
     \centering
     \subcaptionbox
     {
+    \label{fig:mss-130bpm-feature}}
+    {\includegraphics[width=0.7\linewidth]{ch4/fig-mss-130bpm-feature.png}}
+    ~
+    \subcaptionbox
+    {
     \label{fig:mss-130bpm-tracking-output}}
     {\includegraphics[scale=0.36]{ch4/fig-mss-130bpm-tracking-system-output.png}}
     ~
@@ -601,6 +700,11 @@ $| \Delta t\vert $為現場伴奏音訊的延遲。
 \begin{figure}[H]
     %\captionsetup[subfigure]{labelformat=empty} % 完全隱藏圖號
     \centering
+    \subcaptionbox
+    {
+    \label{fig:mss-140bpm-feature}}
+    {\includegraphics[width=0.7\linewidth]{ch4/fig-mss-140bpm-feature.png}}
+    ~
     \subcaptionbox
     {
     \label{fig:mss-140bpm-tracking-output}}
@@ -624,6 +728,11 @@ $| \Delta t\vert $為現場伴奏音訊的延遲。
 \begin{figure}[H]
     %\captionsetup[subfigure]{labelformat=empty} % 完全隱藏圖號
     \centering
+    \subcaptionbox
+    {
+    \label{fig:mss-free-feature}}
+    {\includegraphics[width=0.7\linewidth]{ch4/fig-mss-free-feature.png}}
+    ~
     \subcaptionbox
     {
     \label{fig:mss-free-tracking-output}}
@@ -664,6 +773,11 @@ RPE估計出的位置也因為兩個音訊的特徵不夠相近，使粗略估�
     \centering
     \subcaptionbox
     {
+    \label{fig:free-ours-feature}}
+    {\includegraphics[width=0.7\linewidth]{ch4/fig-free-ours-feature.png}}
+    ~
+    \subcaptionbox
+    {
     \label{fig:free-ours-ref-tracking-output}}
     {\includegraphics[scale=0.36]{ch4/fig-free-ours-ref-tracking-system-output.png}}
     ~
@@ -676,9 +790,9 @@ RPE估計出的位置也因為兩個音訊的特徵不夠相近，使粗略估�
 \end{figure}
 上述的結果音檔可從此連結~\cite{YuJieLin2024DiffFeatureTrackingResults}查看聆聽。
 
-最後，根據~\cite{lin2021AIMusician}的紀錄，
+最後，根據~\cite{lin2021AIMusician}的文章寫到，
 ~\cite{Lin2020AHumanComputerDuetSystem}的系統在偵測到觸發伴奏的平均延遲控制在0.1秒左右，
-而本研究實際測試後，我們的系統可將偵測到觸發伴奏的平均延遲控制在0.05秒左右。
+而本研究實際測試後，我們的系統可將偵測到觸發伴奏(接收串流音訊到輸出伴奏音訊所花費的時間)的平均延遲控制在0.05秒左右。
 
 % \subsection{不同系統參數設定下的追蹤結果}
 % 需測試

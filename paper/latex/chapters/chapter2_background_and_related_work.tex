@@ -145,8 +145,12 @@ Hybrid Transformers~\cite{rouard2023hybrid}，將Encoder/Decoder內部兩層替�
 % 引用音源分離的相關論文並進一步討論
 
 \subsection{音樂追蹤相關研究}
-音樂追蹤在MIR領域中是一項重要的應用，與節拍追蹤~\cite{heydari2021don, goto2021musical, di2021downbeat}、
+音樂追蹤在MIR領域中是一項重要的應用，與節拍追蹤~\cite{heydari2021don, di2021downbeat}、
 樂譜追蹤~\cite{henkel2019score}、自動伴奏~\cite{zhang2023design}等相關技術有密切的關係，
+~\cite{heydari2021don}提出了線上節拍追蹤模型，使用特徵提取的單向RNN預測節拍函數與線上決策的粒子濾波加快決策過程；
+~\cite{di2021downbeat}提出將尺度不變的卷積層應用於CNN的重拍跟蹤的重拍追蹤模型；
+~\cite{henkel2019score}使用強化式學習讀取音訊與樂譜影像學習如何追蹤目前音樂的位置；
+~\cite{zhang2023design}設計透過多基頻估計獲得訓練特徵的基於神經網路之鋼琴自動伴奏系統；
 本節專注探討以音訊特徵為主的即時音樂追蹤方法與應用的相關研究。
 
 音樂追蹤的方法包含隱藏馬爾科夫模型(Hidden Markov Model, HMM)~\cite{cano1999score}，

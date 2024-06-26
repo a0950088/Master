@@ -34,7 +34,7 @@ Bach Violin Dataset為整合了高品質公開錄音的巴赫小提琴獨奏奏�
 
 整合完畢的訓練資料集格式如\cref{table:table-ours-training-dataset}所示，
 小提琴獨奏音檔的總時長為5小時24分47秒，
-鋼琴獨奏音檔的總時長為5小時06分37秒，
+鋼琴獨奏音檔的總時長為5小時23分11秒，
 所有資料皆為單聲道WAVE音訊格式。
 \begin{table}[h]
     \centering
@@ -343,7 +343,7 @@ V7、小提琴、鋼琴的子頻帶數皆為40個，
 
 \section{音樂追蹤評估}
 
-\subsection{系統在不同速度下的追蹤結果} \label{ch4-subst-midi-tracking-results}
+\subsection{音樂追蹤模組評估方法} \label{ch4-subst-music-tracking-module-assessment-method}
 我們參考~\cite{Lin2020AHumanComputerDuetSystem}中的評估方法來檢測小提琴演奏追蹤系統的表現，
 在~\cite{Lin2020AHumanComputerDuetSystem}中，現場演奏樂器為鋼琴，電腦輸出合奏為小提琴(MIDI)，
 參考音訊為MIDI檔案，
@@ -355,14 +355,14 @@ V7、小提琴、鋼琴的子頻帶數皆為40個，
 最後計算現場小提琴輸出位置與正確小提琴輸出位置的DTW對齊路徑，
 使用\cref{eq:latency-function}與\cref{eq:avarage-latency-function}計算瞬間延遲與平均延遲來評估。
 
-本研究使用的現場演奏樂器為小提琴，電腦輸出合奏為鋼琴，在演奏曲子與參考音訊速度的設定上我們跟隨
+本研究使用的現場演奏樂器為小提琴，電腦輸出音訊為鋼琴，在現場音訊與參考音訊速度的設定上我們跟隨
 ~\cite{Lin2020AHumanComputerDuetSystem}的設定，
 然而在~\cite{Lin2020AHumanComputerDuetSystem}中並沒有提到他們是如何控制現場演奏速度的變化，
 本研究為了能客觀地控制速度變化並計算評估結果，
-我們將現場演奏的部分改為使用隨機生成速度的MIDI檔案來評估，
+我們將現場音訊的部分改為使用隨機生成速度的MIDI檔案來評估，
 由於MIDI檔案擁有音符開始時間、節拍等等資訊，因此能精準地計算延遲，此外，
-我們可以透過現場MIDI檔案生成正確的鋼琴輸出音訊，因此不需要額外的節拍追蹤工具輔助。
-雖然現場演奏為預先設定好的檔案，但這並不影響即時的效果，現場音訊還是會以串流的方式進行處理。
+我們可以透過現場MIDI檔案生成正確的鋼琴伴奏音訊，因此不需要額外的節拍追蹤工具輔助。
+雖然現場音訊為預先設定好的檔案，但這並不影響即時的效果，現場音訊還是會以串流的方式進行處理。
 
 \cref{fig:different-speed-midi-score-5bars}為在四種不同速度範圍下隨機生成的MIDI檔案，
 我們透過讀取MIDI檔案中每個MIDI事件，將每個MIDI事件設定為有50\%的機率可以在速度範圍下隨機設定速度。
@@ -399,7 +399,7 @@ V7、小提琴、鋼琴的子頻帶數皆為40個，
     \label{fig:different-speed-midi-score-5bars}
 \end{figure}
 
-由於正確的鋼琴輸出音訊已經透過MIDI檔案生成，
+由於正確的鋼琴伴奏音訊已經透過MIDI檔案生成，
 % 因此我們只需要使用追蹤結果與正確的鋼琴輸出音訊計算DTW對齊路徑，
 我們只需要用正確伴奏音訊$Acc_{gt}$與追蹤系統估計的伴奏音訊$Acc_{out}$計算DTW對齊路徑，
 由於伴奏音訊的時間長度是一致的，
@@ -423,56 +423,58 @@ $| \Delta t\vert $為現場伴奏音訊的延遲。
     \frac{1}{T} \sum _{t=0}^{T} | \Delta [t] \vert 
 \end{equation}
 
-\cref{fig:fig-ch4-slow-and-normal-latency-results}與\cref{fig:fig-ch4-fast-and-accelerate-latency-results}
-顯示系統在四種速度變化下隨時間變化的延遲圖，也就是現場系統伴奏比正確伴奏要提前或落後多少個16分音符。
+\subsection{音樂追蹤模組評估結果} \label{ch4-subst-music-tracking-module-assessment-results}
+我們顯示系統在四種速度變化下隨時間變化的延遲圖，
+也就是系統估計伴奏比正確伴奏要提前或落後多少個16分音符。
 藍色線為系統延遲的16分音符數量，橘色線為當下的速度(bpm)。
 \cref{fig:fig-slow-latency}是慢速時系統隨時間變化的延遲，可以看到系統在一開始雖然動盪較大，
 但都保持在不超過2個16分音符的延遲下穩定追蹤，即使節拍動盪很大也不影響到系統的穩定性，
 最後的平均延遲為55.04ms。
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{ch4/fig-slow-latency.png}
+    \caption{慢(90-120bpm) 平均延遲：55.04毫秒}
+    \label{fig:fig-slow-latency}
+\end{figure}
+
+\cref{fig:fig-normal-latency}是一般速度下的延遲圖，由於一般速度的範圍是最接近參考音訊的速度，
+因此可以看到整體平均延遲為四種速度下最低的，系統延遲線幾乎保持在y軸為0的地方。
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{ch4/fig-normal-latency.png}
+    \caption{一般(115-145bpm) 平均延遲：35.81毫秒}
+    \label{fig:fig-normal-latency}
+\end{figure}
+
 \cref{fig:fig-fast-latency}是快速時系統隨時間變化的延遲，
 與慢速的延遲圖很像，但動盪較大，這可能是因為快速的速度範圍與參考的速度相差較多，
 因此導致系統在追蹤時較容易有延遲，最後的平均延遲為62.96ms。
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{ch4/fig-fast-latency.png}
+    \caption{快(135-175bpm) 平均延遲：62.96毫秒}
+    \label{fig:fig-fast-latency}
+\end{figure}
+
 \cref{fig:fig-accelerate-latency}是漸快時系統隨時間變化的延遲，
 由於一開始速度較慢，因此導致系統剛開始追蹤時動盪較大，當速度慢慢回升到接近參考音訊的速度時，
 可以看到動盪越來越小，最後的平均延遲為58.23ms。
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{ch4/fig-accelerate-latency.png}
+    \caption{加速(80$ \rightarrow $160bpm) 平均延遲：58.73毫秒}
+    \label{fig:fig-accelerate-latency}
+\end{figure}
+
 另外可以發現在第五小節(m5)與第七小節(m7)時，四種速度的延遲皆為正延遲，也就是比起正確的時間點還要提前，
 可能是因為剛好那個時間點為休止符，也就是沒有音樂，因此造成系統先對齊到了最後面的靜音時間點並等待，
 導致延遲。
 
-\begin{figure}[H]
-    %\captionsetup[subfigure]{labelformat=empty} % 完全隱藏圖號
-    \centering
-    \subcaptionbox
-    {慢(90-120bpm) 平均延遲：55.04毫秒
-    \label{fig:fig-slow-latency}}
-    {\includegraphics[width=\linewidth]{ch4/fig-slow-latency.png}}
-    ~
-    \subcaptionbox
-    {一般(115-145bpm) 平均延遲：35.81毫秒
-    \label{fig:fig-normal-latency}}
-    {\includegraphics[width=\linewidth]{ch4/fig-normal-latency.png}}
-    \caption{系統在慢、一般速度的延遲時間}
-    \label{fig:fig-ch4-slow-and-normal-latency-results}
-\end{figure}
-
-\begin{figure}[H]
-    %\captionsetup[subfigure]{labelformat=empty} % 完全隱藏圖號
-    \centering
-    \subcaptionbox
-    {快(135-175bpm) 平均延遲：62.96毫秒
-    \label{fig:fig-fast-latency}}
-    {\includegraphics[width=\linewidth]{ch4/fig-fast-latency.png}}
-    ~
-    \subcaptionbox
-    {加速(80$ \rightarrow $160bpm) 平均延遲：58.73毫秒
-    \label{fig:fig-accelerate-latency}}
-    {\includegraphics[width=\linewidth]{ch4/fig-accelerate-latency.png}}
-    \caption{系統在快、加速速度的延遲時間}
-    \label{fig:fig-ch4-fast-and-accelerate-latency-results}
-\end{figure}
-
-
-另外我們也顯示了四種速度的對齊路徑結果圖，橫軸為現場音訊的時間點，縱軸為參考音訊的時間點，
+我們也顯示了四種速度的對齊路徑結果圖，橫軸為現場音訊的時間點，縱軸為參考音訊的時間點，
 熱點圖的顏色代表在時間點$(i, j)$的累積距離成本值，成本值越高顏色越亮。
 (a)圖為追蹤系統在執行時所輸出的結果圖，
 (b)圖為離線對齊路徑與線上對齊路徑的比較圖，離線對齊路徑使用DTW計算。
@@ -564,12 +566,12 @@ $| \Delta t\vert $為現場伴奏音訊的延遲。
 
 上述使用的MIDI檔案與結果音檔可從此連結~\cite{YuJieLin2024MidiTrackingResults}查看聆聽。
 
-% cost matrix對齊圖
-% 放MIDI隨機生成速度的那些評估圖
+\pagebreak
 
-\subsection{系統在使用音源分離音訊做為參考特徵的追蹤結果}
+\section{整體系統評估}
+\subsection{系統評估方法}
 為了評估系統是否在不同特徵下也能有好的追蹤結果，
-我們使用與\ref{ch4-subst-midi-tracking-results}節相同的曲子，
+我們使用與\ref{ch4-subst-music-tracking-module-assessment-method}節相同的曲子，
 在網路上找到由kopikostar演奏的小提琴與鋼琴合奏版本\cite{kopikostar2024Beethoven}，
 並對此混合音訊做音源分離，將分離結果作為參考音訊與伴奏音訊。
 分離結果的音檔可至此連結聆聽~\cite{YuJieLin2024MusicSourceSeparation}。
@@ -602,11 +604,13 @@ $| \Delta t\vert $為現場伴奏音訊的延遲。
     \label{fig:fig-ch4-hardware-device}
 \end{figure}
 
-由於沒有正確的伴奏音訊(Ground truth)，因此我們無法使用\ref{ch4-subst-midi-tracking-results}節的方法來評估
+由於沒有正確的伴奏音訊(Ground truth)，
+因此我們無法使用\ref{ch4-subst-music-tracking-module-assessment-method}節的方法來評估
 與正確伴奏音訊的延遲。
 因此我們改由計算系統輸出路徑與DTW離線對齊路徑的平均延遲幀數來評估系統在線上追蹤的表現是否與離線追蹤相當，
 這邊的平均延遲幀數代表的是對於線上追蹤表現，是否提前或落後離線追蹤表現。
 
+\subsection{系統評估結果}
 下圖為五種不同速度的對齊路徑結果圖，橫軸為現場音訊的時間點，縱軸為參考音訊的時間點，
 (a)圖為追蹤系統在執行時所輸出的結果圖，
 (b)圖為離線對齊路徑與線上對齊路徑的比較圖與平均延遲幀數。
@@ -623,17 +627,17 @@ $| \Delta t\vert $為現場伴奏音訊的延遲。
     \subcaptionbox
     {
     \label{fig:mss-110bpm-feature}}
-    {\includegraphics[width=0.7\linewidth]{ch4/fig-mss-110bpm-feature.png}}
+    {\includegraphics[width=0.6\linewidth]{ch4/fig-mss-110bpm-feature.png}}
     ~
     \subcaptionbox
     {
     \label{fig:mss-110bpm-tracking-output}}
-    {\includegraphics[scale=0.36]{ch4/fig-mss-110bpm-tracking-system-output.png}}
+    {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-110bpm-tracking-system-output.png}}
     ~
     \subcaptionbox
     {
     \label{fig:mss-110bpm-comparision-output}}
-    {\includegraphics[scale=0.36]{ch4/fig-mss-110bpm-offline-and-online-output.png}}
+    {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-110bpm-offline-and-online-output.png}}
     \caption{110bpm 平均延遲：26.62 幀}
     \label{fig:fig-ch4-mss-110bpm-tracking-results}
 \end{figure}
@@ -649,17 +653,17 @@ $| \Delta t\vert $為現場伴奏音訊的延遲。
     \subcaptionbox
     {
     \label{fig:mss-120bpm-feature}}
-    {\includegraphics[width=0.7\linewidth]{ch4/fig-mss-120bpm-feature.png}}
+    {\includegraphics[width=0.6\linewidth]{ch4/fig-mss-120bpm-feature.png}}
     ~
     \subcaptionbox
     {
     \label{fig:mss-120bpm-tracking-output}}
-    {\includegraphics[scale=0.36]{ch4/fig-mss-120bpm-tracking-system-output.png}}
+    {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-120bpm-tracking-system-output.png}}
     ~
     \subcaptionbox
     {
     \label{fig:mss-120bpm-comparision-output}}
-    {\includegraphics[scale=0.36]{ch4/fig-mss-120bpm-offline-and-online-output.png}}
+    {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-120bpm-offline-and-online-output.png}}
     \caption{120bpm 平均延遲：27.98 幀}
     \label{fig:fig-ch4-mss-120bpm-tracking-results}
 \end{figure}
@@ -676,17 +680,17 @@ $| \Delta t\vert $為現場伴奏音訊的延遲。
     \subcaptionbox
     {
     \label{fig:mss-130bpm-feature}}
-    {\includegraphics[width=0.7\linewidth]{ch4/fig-mss-130bpm-feature.png}}
+    {\includegraphics[width=0.6\linewidth]{ch4/fig-mss-130bpm-feature.png}}
     ~
     \subcaptionbox
     {
     \label{fig:mss-130bpm-tracking-output}}
-    {\includegraphics[scale=0.36]{ch4/fig-mss-130bpm-tracking-system-output.png}}
+    {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-130bpm-tracking-system-output.png}}
     ~
     \subcaptionbox
     {
     \label{fig:mss-130bpm-comparision-output}}
-    {\includegraphics[scale=0.36]{ch4/fig-mss-130bpm-offline-and-online-output.png}}
+    {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-130bpm-offline-and-online-output.png}}
     \caption{130bpm 平均延遲：37.49 幀}
     \label{fig:fig-ch4-mss-130bpm-tracking-results}
 \end{figure}
@@ -703,17 +707,17 @@ $| \Delta t\vert $為現場伴奏音訊的延遲。
     \subcaptionbox
     {
     \label{fig:mss-140bpm-feature}}
-    {\includegraphics[width=0.7\linewidth]{ch4/fig-mss-140bpm-feature.png}}
+    {\includegraphics[width=0.6\linewidth]{ch4/fig-mss-140bpm-feature.png}}
     ~
     \subcaptionbox
     {
     \label{fig:mss-140bpm-tracking-output}}
-    {\includegraphics[scale=0.36]{ch4/fig-mss-140bpm-tracking-system-output.png}}
+    {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-140bpm-tracking-system-output.png}}
     ~
     \subcaptionbox
     {
     \label{fig:mss-140bpm-comparision-output}}
-    {\includegraphics[scale=0.36]{ch4/fig-mss-140bpm-offline-and-online-output.png}}
+    {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-140bpm-offline-and-online-output.png}}
     \caption{140bpm 平均延遲：40.68 幀}
     \label{fig:fig-ch4-mss-140bpm-tracking-results}
 \end{figure}
@@ -731,24 +735,24 @@ $| \Delta t\vert $為現場伴奏音訊的延遲。
     \subcaptionbox
     {
     \label{fig:mss-free-feature}}
-    {\includegraphics[width=0.7\linewidth]{ch4/fig-mss-free-feature.png}}
+    {\includegraphics[width=0.6\linewidth]{ch4/fig-mss-free-feature.png}}
     ~
     \subcaptionbox
     {
     \label{fig:mss-free-tracking-output}}
-    {\includegraphics[scale=0.36]{ch4/fig-mss-free-tracking-system-output.png}}
+    {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-free-tracking-system-output.png}}
     ~
     \subcaptionbox
     {
     \label{fig:mss-free-comparision-output}}
-    {\includegraphics[scale=0.36]{ch4/fig-mss-free-offline-and-online-output.png}}
+    {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-free-offline-and-online-output.png}}
     \caption{自由速度 平均延遲：28.43 幀}
     \label{fig:fig-ch4-mss-free-tracking-results}
 \end{figure}
 
 由於參考音訊與現場音訊的特徵不一致，導致ODTW在計算對齊點時穩定性較為不足，
 RPE估計出的位置也因為兩個音訊的特徵不夠相近，使粗略估計的位置偏差較嚴重，
-因此追蹤結果圖大多數看起來比\ref{ch4-subst-midi-tracking-results}節的結果要差。
+因此追蹤結果圖大多數看起來比\ref{ch4-subst-music-tracking-module-assessment-results}節的結果要差。
 但可以看到在比較離線對齊路徑與線上對齊路徑的結果圖，大致上的路徑都與離線對齊路徑重合，
 因此我們可以知道這兩個音訊在線上的最佳對齊路徑已經非常接近離線對齊路徑，
 達到了即使使用不同特徵追蹤也能維持離線最佳對齊的效果。
@@ -774,17 +778,17 @@ RPE估計出的位置也因為兩個音訊的特徵不夠相近，使粗略估�
     \subcaptionbox
     {
     \label{fig:free-ours-feature}}
-    {\includegraphics[width=0.7\linewidth]{ch4/fig-free-ours-feature.png}}
+    {\includegraphics[width=0.6\linewidth]{ch4/fig-free-ours-feature.png}}
     ~
     \subcaptionbox
     {
     \label{fig:free-ours-ref-tracking-output}}
-    {\includegraphics[scale=0.36]{ch4/fig-free-ours-ref-tracking-system-output.png}}
+    {\includegraphics[width=0.4\linewidth]{ch4/fig-free-ours-ref-tracking-system-output.png}}
     ~
     \subcaptionbox
     {
     \label{fig:free-ours-ref-comparision-output}}
-    {\includegraphics[scale=0.36]{ch4/fig-free-ours-ref-offline-and-online-output.png}}
+    {\includegraphics[width=0.4\linewidth]{ch4/fig-free-ours-ref-offline-and-online-output.png}}
     \caption{自由速度(參考音訊為同一人所演奏) 平均延遲：22.54 幀}
     \label{fig:fig-ch4-free-ours-ref-tracking-results}
 \end{figure}
@@ -796,7 +800,6 @@ RPE估計出的位置也因為兩個音訊的特徵不夠相近，使粗略估�
 
 % \subsection{不同系統參數設定下的追蹤結果}
 % 需測試
-
 
 \pagebreak
 

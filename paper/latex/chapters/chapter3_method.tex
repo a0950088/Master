@@ -177,11 +177,18 @@ $x_N$和$y_M$是任兩個具有時間順序且形狀相似的資料，例如音�
 
 DTW的計算方式如下，
 首先使用歐基里德距離\cref{eq:compute-dtw-cost-function}
-計算X與Y所有時間點的距離，
+計算X與Y所有時間點的距離，如\cref{fig:fig-ch3-dtw-cell-cost-matrix}所示。
 \begin{equation}
     \label{eq:compute-dtw-cost-function}
     d(i, j) = \sqrt{\left\lvert x_i-y_j\right\rvert^{2}}
 \end{equation}
+
+\begin{figure}[!hbt]
+    \centering
+    \includegraphics[width=0.5\linewidth]{ch3/fig-dtw-cell-cost-matrix.png}
+    \caption{DTW單格成本距離矩陣示意圖}
+    \label{fig:fig-ch3-dtw-cell-cost-matrix}
+\end{figure}
 
 並根據\cref{eq:compute-dtw-cost-matrix-function}
 使用動態規劃方式建立距離成本矩陣$D \in \mathbb{R}^{N \times M}$。

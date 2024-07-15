@@ -47,17 +47,24 @@
 \subsection{Band-Split RNN} \label{ch3-subst-band-split-RNN}
 Band-Split RNN(BSRNN)~\cite{Luo_Yi2022MusicSourceSeparation}
 由Luo Yi等人於2022年提出，是一種專門為高取樣率訊號所設計的時頻域音源分離模型。
-BSRNN將輸入的頻譜圖$X\in \mathbb{C} ^{F\times T}$
-根據自定義的頻帶切割點$G = (G_1, G_2, \dots G_i), \sum_{i = 1}^{K} G_i = F $
+BSRNN的輸入為頻譜圖$X\in \mathbb{C} ^{F\times T}$，如\cref{fig:fig-ch3-BSRNN-input-feature}所示。
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\linewidth]{ch3/fig-BSRNN-input-feature.png}
+    \caption{BSRNN 輸入頻譜圖}
+    \label{fig:fig-ch3-BSRNN-input-feature}
+\end{figure}
+
+\fig[1][fig:fig-ch3-BSRNN-model-structure][!hbt]{ch3/fig-BSRNN-model-structure.png}
+[BSRNN架構圖，擷取自~\cite{Luo_Yi2022MusicSourceSeparation}][BSRNN架構圖，擷取自~\cite{Luo_Yi2022MusicSourceSeparation}]
+% BSRNN將輸入的頻譜圖$X\in \mathbb{C} ^{F\times T}$
+接著會根據自定義的頻帶切割點$G = (G_1, G_2, \dots G_i), \sum_{i = 1}^{K} G_i = F $
 拆分成一個個的子帶頻譜圖$B = (B_1, B_2, \dots B_K), B_K \in \mathbb{C}^{G_K\times T}$，
 每個不同大小的子帶頻譜圖經過處理後變為一系列具有相同維度的特徵$Z\in \mathbb{R}^{N\times K\times T}$，
 接著利用RNN層將頻帶與序列的資訊交錯建模得到輸出$Q\in \mathbb{R}^{N\times K\times T}$，
 最後每個子帶特徵由MLP產生對應的複值時頻遮罩$M\in \mathbb{C}^{F\times T}$，
 並將遮罩用於輸入的混合頻譜圖來產生估計的目標源頻譜圖$S\in \mathbb{C}^{F\times T}$。
 整體架構如\cref{fig:fig-ch3-BSRNN-model-structure}所示。
-
-\fig[1][fig:fig-ch3-BSRNN-model-structure][!hbt]{ch3/fig-BSRNN-model-structure.png}
-[BSRNN架構圖，擷取自~\cite{Luo_Yi2022MusicSourceSeparation}][BSRNN架構圖，擷取自~\cite{Luo_Yi2022MusicSourceSeparation}]
 
 其中在\cref{fig:fig-ch3-BSRNN-model-structure} (B) 
 的頻帶切割模組(Band split module)是BSRNN模型中最重要的模組，
@@ -75,7 +82,9 @@ BSRNN將輸入的頻譜圖$X\in \mathbb{C} ^{F\times T}$
 為了使Band-Split RNN中的頻帶切割模組發揮更好的效果，
 我們使用簡單的頻帶切割估計方法來估計小提琴與鋼琴的頻帶切割點，
 此方法不需要依賴先驗知識或專家知識的幫助，而是透過同一種樂器的音訊資料來估計頻帶切割點。
-首先我們對每種樂器選取約15分鐘的的音訊資料，這些資料並不會加入模型的訓練。
+首先我們對每種樂器選取約15分鐘的的音訊資料，
+對於小提琴資料，我們分別選取有不同速度與不同難度的技巧(例如：雙音、跳弓等)表現的音訊，
+而鋼琴資料則是選取有不同速度的音訊，這些資料並不會加入模型的訓練。
 對於每筆資料，使用取樣率$sr = 44100$Hz讀取，
 並初始化頻帶陣列$F_{band} \in \frac{sr}{2}$來記錄每個頻率占有的成分多寡。
 使用快速傅立葉轉換(Fast Fourier Transform, FFT)
@@ -128,20 +137,6 @@ Piano = [100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,\\
 (0-355Hz,\ 355-455Hz,\ $\dots$ ,\ 13042-22050Hz)共40個，
 鋼琴的子頻帶為(0-100Hz,\ 100-200Hz,\ $\dots$ ,\ 9191-22050Hz)共40個，
 在訓練BSRNN模型時我們將會套用上面兩個頻帶切割範圍做訓練。
-% 依照上述的切割比例我們得到兩種樂器的頻帶切割點為 \\
-% \\
-% Violin = [400,500,600,700,800,900,1000,1100,1200,1300,1500,1600,1700,1800,\\
-% 1900,2000,2100,2300,2400,2500,2600,2700,2800,2900,3000,3200,3400,3600,3800,\\
-% 4000,4200,4500,4800,5300,5800,6500,7400,8600,10400,13000,18000]\\
-% \\
-% Piano = [100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,\\
-% 1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000,\\
-% 3200,3400,3600,3900,4100,4400,4800,5300,5900,6900,8700,17300]\\
-% \\
-% 以小提琴的頻帶切割點來看，訓練時所使用的子頻帶為
-% (0-400Hz,\ 400-500Hz,\ $\dots$ ,\ 18000-22050Hz)，
-% 鋼琴的子頻帶為(0-100Hz,\ 100-200Hz,\ $\dots$ ,\ 17300-22050Hz)，
-% 在訓練BSRNN模型時我們將會套用上面兩個頻帶切割範圍做訓練。
 
 \pagebreak
 
@@ -453,14 +448,6 @@ $L_{upper}$的設定為可調整的，此數值大約允許現場音訊比參考
     \label{fig:fig-ch3-gba-compute-output}
 \end{figure}
 
-% 解釋為何需要、
-% 從候選位置中挑選最好的path、
-% 說明參數的設定
-
-% \subsection{即時追蹤系統設計}
-% 在音樂追蹤模組中，若無法即時的處理串流音訊導致系統阻塞，就無法達到即時伴奏的效果。
-% 因此
-
 \subsection{資料管理者元件(Data Manager Block)} \label{ch3-subst-data-manager}
 在線上處理階段啟動前與啟動後，
 我們對非串流音訊(參考音訊)與串流音訊(現場音訊)
@@ -665,12 +652,6 @@ $N$為$Ref_{low}$的時間長度。
     \label{fig:fig-ch3-RPE-cost-matrix-with-output}
 \end{figure}
 
-% 使用低解析度特徵、
-% 如何計算cost matrix、
-% Greedy的設置與做法(在前面解釋)、
-% 決定輸出的機制、
-% 放圖
-
 \subsection{決策決定者元件(Decision Maker Block)} \label{ch3-subst-decision-maker}
 決策決定者由ODTW thread與GBA threads所組成，
 負責即時計算現場音訊的高解析度特徵與小提琴參考音訊的高解析度特徵之即時對齊位置，
@@ -718,13 +699,6 @@ GBA threads會計算黃色點與桃紅色點的向後對齊成本，
     \caption{DTW與系統的輸出路徑比較圖}
     \label{fig:fig-ch3-offline-and-online-path}
 \end{figure}
-
-% 使用高解析度特徵、
-% cost matrix的計算
-% 清楚解釋ODTW main thread、
-% 清楚解釋Greedy threads、
-% 清楚解釋輸出的轉換
-% 放圖
 
 \pagebreak
 

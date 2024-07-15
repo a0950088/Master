@@ -8,6 +8,9 @@
 與本研究使用的Band-Split RNN~\cite{Luo_Yi2022MusicSourceSeparation}
 在小提琴與鋼琴混合音訊資料上的表現。首先介紹使用的訓練資料集與測試資料集，
 接著介紹模型訓練的設定、評估指標與評估結果。
+另外我們也測試了簡單旋律與複雜旋律的分離結果，
+並將分離結果音檔放在公開平台上，
+可由此連結~\cite{YuJieLin2024DifferentMelodyMusicSourceSeparation}查看聆聽。
 
 \subsection{音源分離資料集}
 在眾多的音訊公開資料集中，能同時包含多音軌錄音資料和乾淨的單音軌錄音資料可說是少之又少，
@@ -93,8 +96,6 @@ Bach Violin Dataset為整合了高品質公開錄音的巴赫小提琴獨奏奏�
 \end{table}
 
 訓練、驗證、測試資料集皆可從此連結~\cite{YuJieLin2024MSSDataset}查看。
-
-% \colorbox{yellow}{放資料集的連結?}
 
 \subsection{模型訓練細節} \label{training-dataset-processing}
 為了公平起見，我們使用自己的公開資料集重新訓練Aug4mss模型來評估效能，
@@ -191,13 +192,6 @@ $s(n)$為正確的波型，$\hat{s}(n)$為估計的波型，
     獲得每首曲子的SDR數值後再取中位數。
 \end{enumerate}
 
-% 最後將小提琴與鋼琴的SDR加總取平均
-
-% \begin{equation}
-%     \label{eq:SDR-song-function}
-%     SDR_{Songs} = \frac{1}{2} (SDR_{Violin} + SDR_{Piano})
-% \end{equation}
-
 \subsection{音源分離結果比較}
 
 根據 \ref{training-dataset-processing} 節所提到的兩種情況，
@@ -222,14 +216,12 @@ Data Augmentation方法測試模型效能，
         \cline{2-4}
         ~ & Aug4mss(retrain) & 2.05 & 1.72 \\
         \cline{2-4}
-        % ~ & \textbf{Band-Split RNN} & \textbf{8.910} & \textbf{3.264} \\
         ~ & \textbf{Band-Split RNN} & \textbf{8.085} & \textbf{5.580} \\
         \hline
         \multirow{3}*{Piano} & Aug4mss(paper) & 7.43 & N/A \\
         \cline{2-4}
         ~ & Aug4mss(retrain) & 11.906 & 10.974 \\
         \cline{2-4}
-        % ~ & \textbf{Band-Split RNN} & \textbf{14.659} & \textbf{13.460} \\
         ~ & \textbf{Band-Split RNN} & \textbf{15.975} & \textbf{14.854} \\
         \hline
     \end{tabular}
@@ -309,18 +301,14 @@ V7、小提琴、鋼琴的子頻帶數皆為40個，
         \hline
         \multicolumn{1}{|c|}{分離目標樂器} & \multicolumn{1}{|c|}{Bandwidth} & \multicolumn{1}{|c|}{cSDR} & \multicolumn{1}{|c|}{uSDR}\\
         \hline
-        % \multirow{3}*{Violin} & \textbf{Violin bandwidth version} & \textbf{8.910} & \textbf{3.264} \\
         \multirow{3}*{Violin} & Violin bandwidth version & 8.085 & \textbf{5.580} \\
         \cline{2-4}
-        % ~ & Piano bandwidth version & 8.796 & 3.077 \\
         ~ & Piano bandwidth version & \textbf{9.908} & 5.532 \\
         \cline{2-4}
         ~ & V7 bandwidth version & 8.842 & 3.157 \\
         \hline
-        % \multirow{3}*{Piano} & Violin bandwidth version & 14.209 & 13.141 \\
         \multirow{3}*{Piano} & Violin bandwidth version & 15.653 & 14.851 \\
         \cline{2-4}
-        % ~ & \textbf{Piano bandwidth version} & \textbf{14.659} & \textbf{13.460} \\
         ~ & Piano bandwidth version & \textbf{15.975} & \textbf{14.854} \\
         \cline{2-4}
         ~ & V7 bandwidth version & 14.556 & 13.370 \\
@@ -375,7 +363,6 @@ V7、小提琴、鋼琴的子頻帶數皆為40個，
 我們平均的將速度範圍分配到每個MIDI事件上，模擬漸快的情況。
 
 \begin{figure}[H]
-    %\captionsetup[subfigure]{labelformat=empty} % 完全隱藏圖號
     \centering
     \subcaptionbox
     {慢(90-120bpm)
@@ -401,7 +388,6 @@ V7、小提琴、鋼琴的子頻帶數皆為40個，
 \end{figure}
 
 由於正確的鋼琴伴奏音訊已經透過MIDI檔案生成，
-% 因此我們只需要使用追蹤結果與正確的鋼琴輸出音訊計算DTW對齊路徑，
 我們只需要用正確伴奏音訊$Acc_{gt}$與即時音樂追蹤系統估計的伴奏音訊$Acc_{out}$計算DTW對齊路徑，
 由於伴奏音訊的時間長度是一致的，
 因此可以根據\cref{eq:latency-function}
@@ -484,10 +470,8 @@ $| \Delta t\vert $為估計伴奏音訊的延遲。
 因此可以看到\cref{fig:slow-tracking-output}在某些區間(例如live約600frames時)
 綠色的點所連成的線較為平緩，代表此區間系統輸出較多相同的參考音訊時間點來等待現場音訊。
 在\cref{fig:slow-comparision-output}的表現上，幾乎與離線對齊時的最佳路徑是一致的。
-% 只是可能系統上一些無法避免的延遲(例如接收串流音訊)，造成兩條路徑並不是完整的重合。
 
 \begin{figure}[H]
-    %\captionsetup[subfigure]{labelformat=empty} % 完全隱藏圖號
     \centering
     \subcaptionbox
     {
@@ -507,7 +491,6 @@ $| \Delta t\vert $為估計伴奏音訊的延遲。
 也是表現得與離線對齊路徑相當。
 
 \begin{figure}[H]
-    %\captionsetup[subfigure]{labelformat=empty} % 完全隱藏圖號
     \centering
     \subcaptionbox
     {
@@ -529,7 +512,6 @@ $| \Delta t\vert $為估計伴奏音訊的延遲。
 但可以看到整體路徑與離線對齊路徑還是一致的。
 
 \begin{figure}[H]
-    %\captionsetup[subfigure]{labelformat=empty} % 完全隱藏圖號
     \centering
     \subcaptionbox
     {
@@ -550,7 +532,6 @@ $| \Delta t\vert $為估計伴奏音訊的延遲。
 在\cref{fig:accelerate-comparision-output}的表現上，與離線對齊路徑也是呈現一致。
 
 \begin{figure}[H]
-    %\captionsetup[subfigure]{labelformat=empty} % 完全隱藏圖號
     \centering
     \subcaptionbox
     {
@@ -585,7 +566,6 @@ $| \Delta t\vert $為估計伴奏音訊的延遲。
 並使用Focusrite Scarlett 2i2錄音介面處理類比與數位訊號，
 硬體設備如\cref{fig:fig-ch4-hardware-device}所示。
 \begin{figure}[H]
-    %\captionsetup[subfigure]{labelformat=empty} % 完全隱藏圖號
     \centering
     \subcaptionbox
     {Focusrite Scarlett 2i2錄音介面
@@ -623,7 +603,6 @@ $| \Delta t\vert $為估計伴奏音訊的延遲。
 約為532ms左右。
 
 \begin{figure}[H]
-    %\captionsetup[subfigure]{labelformat=empty} % 完全隱藏圖號
     \centering
     \subcaptionbox
     {
@@ -649,7 +628,6 @@ $| \Delta t\vert $為估計伴奏音訊的延遲。
 約為560ms左右。
 
 \begin{figure}[H]
-    %\captionsetup[subfigure]{labelformat=empty} % 完全隱藏圖號
     \centering
     \subcaptionbox
     {
@@ -676,7 +654,6 @@ $| \Delta t\vert $為估計伴奏音訊的延遲。
 約為750ms左右。
 
 \begin{figure}[H]
-    %\captionsetup[subfigure]{labelformat=empty} % 完全隱藏圖號
     \centering
     \subcaptionbox
     {
@@ -703,7 +680,6 @@ $| \Delta t\vert $為估計伴奏音訊的延遲。
 約為814ms左右。
 
 \begin{figure}[H]
-    %\captionsetup[subfigure]{labelformat=empty} % 完全隱藏圖號
     \centering
     \subcaptionbox
     {
@@ -731,7 +707,6 @@ $| \Delta t\vert $為估計伴奏音訊的延遲。
 約為569ms左右。
 
 \begin{figure}[H]
-    %\captionsetup[subfigure]{labelformat=empty} % 完全隱藏圖號
     \centering
     \subcaptionbox
     {
@@ -775,7 +750,6 @@ RPE估計出的位置也因為兩個音訊的特徵不夠相近，使粗略估�
 在平均延遲上也比\cref{fig:fig-ch4-mss-free-tracking-results}要來的好。
 
 \begin{figure}[H]
-    %\captionsetup[subfigure]{labelformat=empty} % 完全隱藏圖號
     \centering
     \subcaptionbox
     {
@@ -799,9 +773,6 @@ RPE估計出的位置也因為兩個音訊的特徵不夠相近，使粗略估�
 最後，根據~\cite{lin2021AIMusician}的文章寫到，
 ~\cite{Lin2020AHumanComputerDuetSystem}的系統在偵測到觸發伴奏的平均延遲控制在0.1秒左右，
 而本研究實際測試後，我們的系統可將偵測到觸發伴奏(接收串流音訊到輸出伴奏音訊所花費的時間)的平均延遲控制在0.05秒左右。
-
-% \subsection{不同系統參數設定下的追蹤結果}
-% 需測試
 
 \pagebreak
 

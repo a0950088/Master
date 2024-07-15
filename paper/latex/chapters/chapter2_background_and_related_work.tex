@@ -87,22 +87,28 @@
 
 \section{文獻回顧}
 \subsection{音源分離相關研究}
-音源分離為MIR中的一個重要領域，日常生活中我們所聽到的音樂大多數是來自多個音源的混合音訊，
+音源分離(Music Source Separation, MSS)為MIR中的一個重要領域，日常生活中我們所聽到的音樂大多數是來自多個音源的混合音訊，
 許多人可能希望調整混合音訊中的某種樂器的聲音平衡、改變聲音的空間位置，
 甚至將混合音訊與每個存在於其中的音樂來源作為其他MIR任務的訓練資料，
 因此，若是可以取得每個音樂來源的單獨音訊，上述所說的應用都能夠實現。
 
+而音源分離是盲源分離(Blind Source Separation, BSS)的一個子任務，更早出現在MIR的領域中，
+盲源分離不只用於處理音訊資料，在生物醫學訊號與通信訊號的處理上也會使用到此技術。
+主要方法有兩種，獨立成分分析(Independent Components Analysis, ICA)~\cite{comon1994independent}，
+此方法的目標是找到一個分離矩陣，使混合訊號透過分離矩陣計算出獨立的來源訊號；
+非負矩陣分解(Non-negative Matrix Factorization, NMF)~\cite{lee2000algorithms}
+為一種非監督式的機器學習技術，此方法是希望找到最好的兩個矩陣，使他們的乘積能接近原始的輸入。
+另外也常用主成分分析法(Principal Component Analysis, PCA)~\cite{mackiewicz1993principal}
+來降低資料為度與消除雜訊。
+然而盲源分離的方法對於分離複雜度高的訊號，表現並不理想。
+
+近年來隨著深度學習領域的蓬勃發展，大家漸漸將音訊資料的盲源分離變成一個子任務，也就是音源分離，
+目前最常見的目標為分離一首包含人聲、貝斯、鼓與其他(非前三者的所有音訊)的歌曲，
 音源分離的目標最常見的為分離一首包含人聲、貝斯、鼓與其他(非前三者的所有音訊)的歌曲，
 在大型音源分離比賽~\cite{Yuki_Mitsufuji2021MusicDemixing, Fabbro_Giorgio2023TheSoundDemixing}
 中也是使用此標準進行。音源分離的方法可分為基於時間頻率表示方法與基於波形表示方法，
 第一種通常會預測每個來源的功率頻譜，並結合輸入的混合音訊相位來合成每個音源的波形，
-較傳統的方法有獨立成分分析(Independent Components Analysis, ICA)~\cite{comon1994independent}，
-此方法的目標是找到一個分離矩陣，使混合訊號透過分離矩陣計算出獨立的來源訊號；
-非負矩陣分解(Non-negative Matrix Factorization, NMF)~\cite{lee2000algorithms}
-為一種非監督式的機器學習技術，此方法是希望找到最好的兩個矩陣，使他們的乘積能接近原始的輸入。
-然而這兩種方法對於複雜的混合音訊通常無法完全恢復單個音訊。
-近年來隨著深度學習領域的蓬勃發展，
-越來越多研究使用全連接神經網路(Fully-Connected Neural Network, FC)、
+大部分會使用全連接神經網路(Fully-Connected Neural Network, FC)、
 長短期記憶模型(Long Short-Term Memory, LSTM)、
 遞歸神經網路(Recurrent Neural Networks, RNN)等方法訓練頻譜圖。
 2018年由Stöter等人所提出的Open-Unmix~\cite{FabianRobert_Stöter2019OpenUnmix}
@@ -137,12 +143,11 @@ Hybrid Transformers~\cite{rouard2023hybrid}，將Encoder/Decoder內部兩層替�
 透過改變速度、音色、動態時間局部變化來增加新的訓練資料，使模型在實際情況下更能應對演奏時的狀況。
 由Chiu Ching Yu等人提出針對資料規模小的資料集的資料增強方法~\cite{Chiu_ChingYu2020MixingSpecific}，
 使用Open-Unmix模型作為架構提出Aug4mss模型，並在針對小提琴與鋼琴的混合音源分離的任務上，
-比當時可用的最佳模型Spleeter~\cite{hennequin2020spleeter}的效果要好。
+比當時可用的最佳模型Spleeter~\cite{hennequin2020spleeter}的效果要好，
+目標為小提琴時在SDR指標上約提升了1.28DB，鋼琴則提升了4.46DB。
 
 本研究將使用靈活性高且較輕量的Band-Split RNN~\cite{Luo_Yi2022MusicSourceSeparation}模型，
 針對小提琴與鋼琴的混合音源資料做訓練，旨在促進古典樂器錄音的音源分離研究進展。
-
-% 引用音源分離的相關論文並進一步討論
 
 \subsection{音樂追蹤相關研究}
 音樂追蹤在MIR領域中是一項重要的應用，與節拍追蹤~\cite{heydari2021don, di2021downbeat}、
@@ -179,9 +184,6 @@ ODTW不需要事先取得兩段序列的資訊，
 因此本研究致力於研究使用不同音訊特徵來追蹤現場演奏的即時音樂追蹤系統。
 本研究將基於~\cite{Lin2020AHumanComputerDuetSystem}所提出的架構進行重新實現
 並針對ODTW演算法與部分方法進行改動，希望能藉此達到我們所期望的效果並促進即時音樂追蹤研究進展。
-
-% DTW、DTW的各種變形、ODTW、RL、
-% 引用音樂追蹤的相關論文並進一步討論
 
 \pagebreak
 

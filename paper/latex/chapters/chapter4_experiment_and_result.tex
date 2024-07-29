@@ -8,9 +8,6 @@
 與本研究使用的Band-Split RNN~\cite{Luo_Yi2022MusicSourceSeparation}
 在小提琴與鋼琴混合音訊資料上的表現。首先介紹使用的訓練資料集與測試資料集，
 接著介紹模型訓練的設定、評估指標與評估結果。
-另外我們也測試了簡單旋律與複雜旋律的分離結果，
-並將分離結果音檔放在公開平台上，
-可由此連結~\cite{YuJieLin2024DifferentMelodyMusicSourceSeparation}查看聆聽。
 
 \subsection{音源分離資料集}
 在眾多的音訊公開資料集中，能同時包含多音軌錄音資料和乾淨的單音軌錄音資料可說是少之又少，
@@ -272,6 +269,45 @@ Band-Split RNN 在小提琴分離上的 cSDR 和 uSDR 分別為 11.872 和 8.297
 我認為是因為Band-Split RNN有特別針對重要的頻帶做細部的切割，
 使模型能學習到更重要的特徵。
 
+接著我們使用上面訓練出效果最好的BSRNN模型來分離幾種音訊，分別為測試資料集中其中一首音訊、
+貝多芬第五號小提琴奏鳴曲第一樂章與韋瓦第四季-夏的第三樂章。並展示分離結果頻譜圖。
+
+首先\cref{fig:fig-mss-test-dataset-results}為測試資料集中的其中一首音訊，
+我們展示輸入(混合音訊)、鋼琴分離結果、鋼琴Ground truth、小提琴分離結果與小提琴Ground truth的頻譜圖，
+可以看到第二張鋼琴分離結果與第三張鋼琴Ground truth頻譜圖幾乎一模一樣，
+而在小提琴分離結果與Ground truth的比較中，可以看到基頻與泛音位置幾乎沒有偏差，
+另外在基頻以下，Ground truth的頻譜圖有一些錄音時會有的雜訊，但我們的分離結果中並沒有將這些雜訊也一起分離出來，
+我認為是因為模型並沒有針對雜訊方面特別訓練，因此剛好將雜訊濾除。
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{ch4/fig-mss-test-dataset-results.png}
+    \caption{測試資料集 TheKitchenettes\_Alive\_p0\_v0 結果比較圖：(a)混合音訊、(b)鋼琴音訊、(c)鋼琴Ground truth、(d)小提琴音訊、(e)小提琴Ground truth}
+    \label{fig:fig-mss-test-dataset-results}
+\end{figure}
+
+\cref{fig:fig-mss-beethoven-results}為貝多芬第五號小提琴奏鳴曲第一樂章的結果圖，
+由於沒有Ground truth可以比較，我們只展示輸入與分離結果，這首曲子小提琴與鋼琴較沒有太多同時重疊的旋律，
+且旋律組成較簡單，因此可以看到分離結果都很好的將鋼琴與小提琴各自的部分分離出來。
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{ch4/fig-mss-beethoven-results.png}
+    \caption{貝多芬第五號小提琴奏鳴曲第一樂章結果圖：(a)混合音訊、(b)鋼琴音訊、(c)小提琴音訊}
+    \label{fig:fig-mss-beethoven-results}
+\end{figure}
+
+\cref{fig:fig-mss-vivaldi-summer-3rd-results}為韋瓦第四季-夏第三樂章的結果圖，
+與上一首貝多芬相比，這首曲子較多小提琴與鋼琴同時重疊的旋律，且速度較快，旋律組成也較複雜，
+因此可以看到雖然分離結果大部分都有將兩種樂器的旋律分離出來，但在相同重疊處(開頭處)可能會因為頻率成份多寡不好預測，
+而導致分離結果音訊聽起來可能會有一點混合音訊的聲音。
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{ch4/fig-mss-vivaldi-summer-3rd-results.png}
+    \caption{韋瓦第四季-夏\ 第三樂章結果圖：(a)混合音訊、(b)鋼琴音訊、(c)小提琴音訊}
+    \label{fig:fig-mss-vivaldi-summer-3rd-results}
+\end{figure}
+
+上述所提到的三首曲子之分離結果可由此連結~\cite{YuJieLin2024DifferentMelodyMusicSourceSeparation}查看聆聽。
+
 \subsection{頻帶切割對於分離結果的影響}
 
 在BSRNN~\cite{Luo_Yi2022MusicSourceSeparation}的論文中，
@@ -474,12 +510,12 @@ $| \Delta t\vert $為估計伴奏音訊的延遲。
 \begin{figure}[H]
     \centering
     \subcaptionbox
-    {
+    {系統追蹤輸出展示圖
     \label{fig:slow-tracking-output}}
     {\includegraphics[scale=0.36]{ch4/fig-slow-tracking-system-output.png}}
     ~
     \subcaptionbox
-    {
+    {系統與DTW離線追蹤比較圖
     \label{fig:slow-comparision-output}}
     {\includegraphics[scale=0.36]{ch4/fig-slow-offline-and-online-output.png}}
     \caption{慢(90-120bpm)}
@@ -493,12 +529,12 @@ $| \Delta t\vert $為估計伴奏音訊的延遲。
 \begin{figure}[H]
     \centering
     \subcaptionbox
-    {
+    {系統追蹤輸出展示圖
     \label{fig:normal-tracking-output}}
     {\includegraphics[scale=0.36]{ch4/fig-normal-tracking-system-output.png}}
     ~
     \subcaptionbox
-    {
+    {系統與DTW離線追蹤比較圖
     \label{fig:normal-comparision-output}}
     {\includegraphics[scale=0.36]{ch4/fig-normal-offline-and-online-output.png}}
     \caption{一般(115-145bpm)}
@@ -514,12 +550,12 @@ $| \Delta t\vert $為估計伴奏音訊的延遲。
 \begin{figure}[H]
     \centering
     \subcaptionbox
-    {
+    {系統追蹤輸出展示圖
     \label{fig:fast-tracking-output}}
     {\includegraphics[scale=0.36]{ch4/fig-fast-tracking-system-output.png}}
     ~
     \subcaptionbox
-    {
+    {系統與DTW離線追蹤比較圖
     \label{fig:fast-comparision-output}}
     {\includegraphics[scale=0.36]{ch4/fig-fast-offline-and-online-output.png}}
     \caption{快(135-175bpm)}
@@ -534,12 +570,12 @@ $| \Delta t\vert $為估計伴奏音訊的延遲。
 \begin{figure}[H]
     \centering
     \subcaptionbox
-    {
+    {系統追蹤輸出展示圖
     \label{fig:accelerate-tracking-output}}
     {\includegraphics[scale=0.36]{ch4/fig-accelerate-tracking-system-output.png}}
     ~
     \subcaptionbox
-    {
+    {系統與DTW離線追蹤比較圖
     \label{fig:accelerate-comparision-output}}
     {\includegraphics[scale=0.36]{ch4/fig-accelerate-offline-and-online-output.png}}
     \caption{加速(80$ \rightarrow $160bpm)}
@@ -605,17 +641,17 @@ $| \Delta t\vert $為估計伴奏音訊的延遲。
 \begin{figure}[H]
     \centering
     \subcaptionbox
-    {
+    {現場音訊與參考音訊之特徵圖
     \label{fig:mss-110bpm-feature}}
     {\includegraphics[width=0.6\linewidth]{ch4/fig-mss-110bpm-feature.png}}
     ~
     \subcaptionbox
-    {
+    {系統追蹤輸出展示圖
     \label{fig:mss-110bpm-tracking-output}}
     {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-110bpm-tracking-system-output.png}}
     ~
     \subcaptionbox
-    {
+    {系統與DTW離線追蹤比較圖
     \label{fig:mss-110bpm-comparision-output}}
     {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-110bpm-offline-and-online-output.png}}
     \caption{110bpm 平均延遲：26.62 幀}
@@ -630,17 +666,17 @@ $| \Delta t\vert $為估計伴奏音訊的延遲。
 \begin{figure}[H]
     \centering
     \subcaptionbox
-    {
+    {現場音訊與參考音訊之特徵圖
     \label{fig:mss-120bpm-feature}}
     {\includegraphics[width=0.6\linewidth]{ch4/fig-mss-120bpm-feature.png}}
     ~
     \subcaptionbox
-    {
+    {系統追蹤輸出展示圖
     \label{fig:mss-120bpm-tracking-output}}
     {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-120bpm-tracking-system-output.png}}
     ~
     \subcaptionbox
-    {
+    {系統與DTW離線追蹤比較圖
     \label{fig:mss-120bpm-comparision-output}}
     {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-120bpm-offline-and-online-output.png}}
     \caption{120bpm 平均延遲：27.98 幀}
@@ -656,17 +692,17 @@ $| \Delta t\vert $為估計伴奏音訊的延遲。
 \begin{figure}[H]
     \centering
     \subcaptionbox
-    {
+    {現場音訊與參考音訊之特徵圖
     \label{fig:mss-130bpm-feature}}
     {\includegraphics[width=0.6\linewidth]{ch4/fig-mss-130bpm-feature.png}}
     ~
     \subcaptionbox
-    {
+    {系統追蹤輸出展示圖
     \label{fig:mss-130bpm-tracking-output}}
     {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-130bpm-tracking-system-output.png}}
     ~
     \subcaptionbox
-    {
+    {系統與DTW離線追蹤比較圖
     \label{fig:mss-130bpm-comparision-output}}
     {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-130bpm-offline-and-online-output.png}}
     \caption{130bpm 平均延遲：37.49 幀}
@@ -682,17 +718,17 @@ $| \Delta t\vert $為估計伴奏音訊的延遲。
 \begin{figure}[H]
     \centering
     \subcaptionbox
-    {
+    {現場音訊與參考音訊之特徵圖
     \label{fig:mss-140bpm-feature}}
     {\includegraphics[width=0.6\linewidth]{ch4/fig-mss-140bpm-feature.png}}
     ~
     \subcaptionbox
-    {
+    {系統追蹤輸出展示圖
     \label{fig:mss-140bpm-tracking-output}}
     {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-140bpm-tracking-system-output.png}}
     ~
     \subcaptionbox
-    {
+    {系統與DTW離線追蹤比較圖
     \label{fig:mss-140bpm-comparision-output}}
     {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-140bpm-offline-and-online-output.png}}
     \caption{140bpm 平均延遲：40.68 幀}
@@ -709,17 +745,17 @@ $| \Delta t\vert $為估計伴奏音訊的延遲。
 \begin{figure}[H]
     \centering
     \subcaptionbox
-    {
+    {現場音訊與參考音訊之特徵圖
     \label{fig:mss-free-feature}}
     {\includegraphics[width=0.6\linewidth]{ch4/fig-mss-free-feature.png}}
     ~
     \subcaptionbox
-    {
+    {系統追蹤輸出展示圖
     \label{fig:mss-free-tracking-output}}
     {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-free-tracking-system-output.png}}
     ~
     \subcaptionbox
-    {
+    {系統與DTW離線追蹤比較圖
     \label{fig:mss-free-comparision-output}}
     {\includegraphics[width=0.45\linewidth]{ch4/fig-mss-free-offline-and-online-output.png}}
     \caption{自由速度 平均延遲：28.43 幀}
@@ -752,17 +788,17 @@ RPE估計出的位置也因為兩個音訊的特徵不夠相近，使粗略估�
 \begin{figure}[H]
     \centering
     \subcaptionbox
-    {
+    {現場音訊與參考音訊之特徵圖
     \label{fig:free-ours-feature}}
     {\includegraphics[width=0.6\linewidth]{ch4/fig-free-ours-feature.png}}
     ~
     \subcaptionbox
-    {
+    {系統追蹤輸出展示圖
     \label{fig:free-ours-ref-tracking-output}}
     {\includegraphics[width=0.4\linewidth]{ch4/fig-free-ours-ref-tracking-system-output.png}}
     ~
     \subcaptionbox
-    {
+    {系統與DTW離線追蹤比較圖
     \label{fig:free-ours-ref-comparision-output}}
     {\includegraphics[width=0.4\linewidth]{ch4/fig-free-ours-ref-offline-and-online-output.png}}
     \caption{自由速度(參考音訊為同一人所演奏) 平均延遲：22.54 幀}

@@ -91,12 +91,12 @@ BSRNN的輸入為頻譜圖$X\in \mathbb{C} ^{F\times T}$，如\cref{fig:fig-ch3-
 計算頻率域的每個頻率樣本占有的成分，
 由於FFT的對稱性，我們只需要迭帶一半的樣本數，並將振幅值累加到對應的$F_{band}$。
 累加振幅值越高代表此頻率的重要程度越高，如\cref{fig:fig-ch3-bandwidth-estimate}所示，
-此圖為兩種樂器中其中一段音訊資料的波形圖(上)與經過FFT轉換後的$F_{band}$圖(下)，
+此圖為兩種樂器中其中一段音訊資料的波型圖(上)與經過FFT轉換後的$F_{band}$圖(下)，
 可以看到經過FFT轉換後我們可以清楚的看到每個頻率點在這段音訊中佔有的成分。
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.7\linewidth]{ch3/fig-bandwidth-estimate.png}
-    \caption{兩種資料的波形圖(上)與經過FFT轉換後的$F_{band}$圖(下)}
+    \caption{兩種資料的波型圖與經過FFT轉換後的頻譜圖：(a) 小提琴波型圖、(b) 鋼琴波型圖、(c) 小提琴FFT頻譜圖、(d) 鋼琴FFT頻譜圖}
     \label{fig:fig-ch3-bandwidth-estimate}
 \end{figure}
 

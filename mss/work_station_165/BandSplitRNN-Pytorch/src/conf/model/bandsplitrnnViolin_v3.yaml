@@ -1,0 +1,29 @@
+sr: 44100
+n_fft: 2048
+bandsplits: # 47
+  - [300, 300] # 1
+  - [3200, 100] # 29
+  - [4200, 200] # 5
+  - [4500, 300] # 1
+  - [4700, 200] # 1
+  - [5000, 300] # 1
+  - [5400, 400] # 1
+  - [5900, 500] # 1
+  - [6500, 600] # 1
+  - [7200, 700] # 1
+  - [8200, 1000] # 1
+  - [9500, 1300] # 1
+  - [11500, 2000] # 1
+  - [14000, 2500] # 1
+bottleneck_layer: "rnn"
+t_timesteps: 263
+fc_dim: 128
+rnn_dim: 256
+rnn_type: "LSTM"
+bidirectional: True
+num_layers: 12
+mlp_dim: 512
+return_mask: False
+
+complex_as_channel: True
+is_mono: ${..train_dataset.is_mono}

@@ -1,16 +1,17 @@
-from multiprocessing import Manager, Event
-from multiprocessing.managers import BaseManager
+import numpy as np
+import scipy.io.wavfile
+import matplotlib.pyplot as plt
 from collections import deque
-from librosa import stft, power_to_db, griffinlim, istft
-from librosa.feature import melspectrogram
+from pydub import AudioSegment
 from librosa.sequence import dtw
 from librosa.display import specshow
-import numpy as np
-import matplotlib.pyplot as plt
-import scipy.io.wavfile
-from pydub import AudioSegment
+from librosa.feature import melspectrogram
+from librosa import stft, power_to_db, istft
+from multiprocessing import Manager, Event
+from multiprocessing.managers import BaseManager
 
 import config as cfg
+
 from logger import getmylogger
 log = getmylogger(__name__)
 
@@ -237,9 +238,9 @@ class AudioData():
         live_low = power_to_db(np.abs(live_low)**2, ref=np.max)
         fig = plt.figure(figsize=(24, 18))
         ax1 = fig.add_subplot(221)
-        ax1.set_title('live_high_feature')
+        ax1.set_title('(a) live_high_feature', y=-0.08)
         ax2 = fig.add_subplot(222)
-        ax2.set_title('live_low_feature')
+        ax2.set_title('(b) live_low_feature', y=-0.08)
         img_l = specshow(live_high, sr=cfg.SAMPLE_RATE, hop_length=cfg.HOP_SIZE, x_axis='frames', y_axis='mel', fmax=8000, ax=ax1)
         img2_l = specshow(live_low, sr=cfg.SAMPLE_RATE, hop_length=13230, x_axis='frames', y_axis='mel', fmax=8000, ax=ax2)
         # plt.colorbar(img_l, ax=[ax1,ax2], format='%+2.f')
@@ -253,12 +254,13 @@ class AudioData():
         ref_low = power_to_db(np.abs(ref_low)**2, ref=np.max)
         # fig = plt.figure(figsize=(15, 9))
         ax3 = fig.add_subplot(223)
-        ax3.set_title('ref_high_feature')
+        ax3.set_title('(c) ref_high_feature', y=-0.08)
         ax4 = fig.add_subplot(224)
-        ax4.set_title('ref_low_feature')
+        ax4.set_title('(d) ref_low_feature', y=-0.08)
         img_r = specshow(ref_high, sr=cfg.SAMPLE_RATE, hop_length=cfg.HOP_SIZE, x_axis='frames', y_axis='mel', fmax=8000, ax=ax3)
         img2_r = specshow(ref_low, sr=cfg.SAMPLE_RATE, hop_length=13230, x_axis='frames', y_axis='mel', fmax=8000, ax=ax4)
-        plt.colorbar(img_l, ax=[ax1,ax2,ax3,ax4], format='%+2.f')
+        # plt.colorbar(img_l, ax=[ax1,ax2,ax3,ax4], format='%+2.f')
+        fig.tight_layout()
         # plt.savefig(f"{folder}/ref_feature.png")
         plt.savefig(f"{cfg.FOLDER}/feature.png")
         # plt.show()

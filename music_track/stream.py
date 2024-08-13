@@ -1,15 +1,7 @@
-import librosa
 import numpy as np
-# import cfg
-from collections import defaultdict
-# import pyaudio
-import time
-from multiprocessing.managers import BaseManager
-from config import CHANNEL, STREAM_BUFFER, SAMPLE_RATE
-import collections
-from pydub import AudioSegment
-
 from pyaudio import PyAudio, paFloat32, paComplete, paContinue
+
+from config import CHANNEL, STREAM_BUFFER, SAMPLE_RATE, MODE
 
 from logger import getmylogger
 log = getmylogger(__name__)
@@ -18,41 +10,15 @@ INPUT_DEVICE_KEYWORD = '麥克風'
 OUTPUT_DEVICE_KEYWORD = 'Realtek' # 'Focusrite USB Audio'
 
 class Stream:
-    def __init__(self, mode, live_queue, output_queue=None, test_data=None) -> None:
+    def __init__(self, live_queue, output_queue=None, test_data=None) -> None:
         self.pa = PyAudio()
-        # self.test_data = None
-        # self.live_queue = live_q # input queue
-        # self.live = live # full test live
-        # # self.live_record = np.zeros(cfg.STREAM_BUFFER, dtype=np.float32) # record online live
-        # self.live_record = np.zeros(STREAM_BUFFER, dtype=np.float32) # record online live
         
         self.iodevice = self.loadIODevice()
-        if mode == 'test':
+        if MODE == 'test':
             self.__initializeTestData(test_data, live_queue, output_queue)
         else:
             self.__initializeLiveData(live_queue, output_queue)
         log.info("Data initialization completed")
-        # self.stream = self.pa.open(format = paFloat32,
-        #                         #    channels=cfg.CHANNEL,
-        #                            channels=CHANNEL,
-        #                            input_device_index = self.iodevice[0],
-        #                            output_device_index = self.iodevice[1],
-        #                         #    rate=cfg.SAMPLE_RATE,
-        #                            rate=SAMPLE_RATE,
-        #                            output=True,
-        #                            input=True,
-        #                            stream_callback=self.__callback,
-        #                         #    frames_per_buffer = cfg.STREAM_BUFFER)
-        #                            frames_per_buffer = STREAM_BUFFER)
-
-        # self.mute_data = np.zeros(STREAM_BUFFER, dtype=np.float32)
-        # self.mute_data = np.array([0.00001]*2048, dtype=np.float32)
-        
-        # self.stream.stop_stream()
-        
-        # self.path = []
-        
-        # self.frame,self.pre_frame = 0,0
     
     def listIODevice(self):
         """List IO Device information
@@ -65,7 +31,7 @@ class Stream:
         """Load IO Device with keywords.
 
         Returns:
-            _type_: _description_
+            list: [int, int] # device ID
         """
         dinput = None
         doutput = None
@@ -91,10 +57,8 @@ class Stream:
         """Get real live from input device to tracking.
 
         Args:
-            livedata (_type_): _description_
-            frame_count (_type_): _description_
-            time_info (_type_): _description_
-            flag (_type_): _description_
+            livedata (bytes): 串流音訊
+            frame_count (int): 串流音訊幀數
         """
         livedata = np.frombuffer(livedata, dtype=np.float32)
         self.live_record = np.concatenate((self.live_record, livedata))
@@ -113,13 +77,11 @@ class Stream:
         """Use test data to tracking.
 
         Args:
-            livedata (_type_): _description_
-            frame_count (_type_): _description_
-            time_info (_type_): _description_
-            flag (_type_): _description_
-
+            livedata (bytes): 串流音訊
+            frame_count (int): 串流音訊幀數
+            
         Returns:
-            _type_: _description_
+            output_audio (byte): output audio
         """
         
         if len(self.live) == 0:
@@ -148,7 +110,8 @@ class Stream:
         """Initial real live tracking parameters
 
         Args:
-            queue (_type_): _description_
+            live_queue (process queue): 現場音訊queue
+            output_queue (process queue): 輸出伴奏queue
         """
         self.live_queue = live_queue
         self.output_queue = output_queue
@@ -170,8 +133,9 @@ class Stream:
         """Initial test data tracking parameters
 
         Args:
-            test_live (_type_): _description_
-            queue (_type_): _description_
+            test_live (nparray): 整首現場音訊
+            live_queue (process queue): 現場音訊queue
+            output_queue (process queue): 輸出伴奏queue
         """
         self.live = test_live # full test live
         self.frame, self.pre_frame = 0, 0
@@ -199,6 +163,7 @@ class Stream:
         """
         self.stream.start_stream()
 
+"""列出所有目前電腦可用的IO Device"""
 if __name__ == '__main__':
     stream = Stream()
     stream.listIODevice()

@@ -1,20 +1,12 @@
-import madmom
-import librosa
-import matplotlib.pyplot as plt
-import numpy as np
-from pydub import AudioSegment
-import scipy.io.wavfile
 import mido
-from mpl_toolkits.axes_grid1 import host_subplot
+import librosa
+import numpy as np
+import matplotlib.pyplot as plt
 from mpl_toolkits import axisartist
+from mpl_toolkits.axes_grid1 import host_subplot
 from pathlib import Path
 
-# 思考dtw的時間對應: 
-# 開頭結尾都是一樣的，所以理論上 (1,1),(2,2) ... (n,n) 會是最好的對齊
-# est_idx > live_idx -> live 比 est 還要快
-# est_idx < live_idx -> live 比 est 還要慢
-
-# TODO: Music detector
+from config import DATE
 
 SAMPLE_RATE = 44100
 WINDOW_SIZE = int(0.046*SAMPLE_RATE)
@@ -52,7 +44,7 @@ def draw_res(time_frame, latency, time_slice, time_frame_bpm, bpm, avg_deviation
     plt.grid()
     plt.title(f"Avarage Deviation: {avg_deviation} ms", fontsize='xx-large',fontweight='heavy')
     plt.plot()
-    plt.savefig(f"{folder}/latency.png")
+    plt.savefig(f"{folder}/{DATE}_latency.png")
     plt.show()
 
 def midoTempoAndBpmConvert(num):
@@ -64,23 +56,18 @@ def getEstMidiTimeInfo(main_track):
     one_bar = 4*shot
     continued_sec = 0
     now_tempo_sec = 0
-    # bin_count = 1
     
     bar_slice = [0]
     bpm_change_list = []
     for msg in main_track:
-        # print("msg: ", vars(msg), isinstance(msg, mido.MetaMessage))
         if msg.type == 'set_tempo':
             now_tempo_sec = msg.tempo*1e-6
             bpm_change_list.append(((midoTempoAndBpmConvert(msg.tempo)), round((continued_sec*SAMPLE_RATE)/HOP_SIZE)))
         if msg.type == 'note_on':
             tick_count += msg.time
             continued_sec += msg.time*now_tempo_sec/shot # note持續時間/一拍時間 = ?拍 -> 轉換成秒
-            # print("tick_count:", tick_count)
             if tick_count-one_bar == 0: # 累積一小節
-                # print("one_bar !!!", continued_sec)
                 bar_slice.append(round((continued_sec*SAMPLE_RATE)/HOP_SIZE)) # 小節結束時間(sec)
-                # bin_count+=1
                 tick_count = 0
     # 補上最後一小節結束時間
     add_offset = one_bar-tick_count
@@ -95,8 +82,6 @@ def getEstMidiTimeInfo(main_track):
 midi_path = Path('./assessment/slow/data/live_slow.mid')
 live_path = Path('./assessment/slow/tracking_result/live_slow/2024-06-03_ref/acc_record.wav')
 est_path = Path('./assessment/slow/data/est_slow.wav')
-folder = Path(f"./{midi_path.parent.parent}/assessment_result/{midi_path.stem}")
-folder.mkdir(parents=True, exist_ok=True)
 # midi_path = './assessment/normal/live_normal_v2.mid'
 # live_path = './assessment/normal/LiveAcc_live_normal_v2.wav'
 # est_path = './assessment/normal/est_normal_v2.wav'
@@ -106,6 +91,8 @@ folder.mkdir(parents=True, exist_ok=True)
 # midi_path = './assessment/fast/live_fast.mid'
 # live_path = './assessment/fast/LiveAcc_live_fast.wav'
 # est_path = './assessment/fast/est_fast.wav'
+folder = Path(f"./{midi_path.parent.parent}/assessment_result/{midi_path.stem}")
+folder.mkdir(parents=True, exist_ok=True)
 
 mid = mido.MidiFile(str(midi_path), clip=True)
 violin_track = mid.tracks[0]
@@ -120,19 +107,6 @@ live = live[:cut_offset]
 est = est[:cut_offset]
 print(live.shape, est.shape)
 
-# test madmom
-# proc = madmom.features.tempo.TempoEstimationProcessor(min_bpm=80, max_bpm=160, fps=100)
-# act = madmom.features.beats.RNNBeatProcessor()(est_path)
-# beats_p = proc(act)
-# print(beats_p)
-# print(beats_p.shape)
-# for i in range(len(beats_p)):
-#     if i % 100-1 == 0 and i != 0:
-#         print(plus)
-#         plus = 0
-#     plus+=beats_p[i]
-# print(len(beats_p))
-
 # dtw feature
 x_1_chroma = librosa.feature.chroma_stft(y=live, sr=SAMPLE_RATE, tuning=0, norm=2,
                                          hop_length=HOP_SIZE, n_fft=WINDOW_SIZE)
@@ -140,57 +114,21 @@ x_2_chroma = librosa.feature.chroma_stft(y=est, sr=SAMPLE_RATE, tuning=0, norm=2
                                          hop_length=HOP_SIZE, n_fft=WINDOW_SIZE)
 print("chroma feature shape: ", x_1_chroma.shape, x_2_chroma.shape)
 
-# D, wp = librosa.sequence.dtw(X=x_1_chroma, Y=x_2_chroma, metric='cosine')
 D, wp = librosa.sequence.dtw(X=x_1_chroma, Y=x_2_chroma, metric='euclidean')
 print("dtw shape:", D.shape, wp.shape)
-# prev_n = -1
-# for n,m in wp:
-#     if prev_n != n:
-#         print(n, m-n)
-#     else:
-#         print("same!")
-#     prev_n = n
-# prev_m = -1
-# for n,m in wp:
-#     print(n,m)
-    # if prev_m != m:
-    #     print(n, m, m-n)
-    # else:
-    #     print("same!")
-    # prev_m = m
-
-# fig = plt.figure(figsize=(10, 10))
-# ax = fig.add_subplot(111)
-# # librosa.display.specshow(D, x_axis='frames', y_axis='frames',
-# #                         hop_length=HOP_SIZE, n_fft=WINDOW_SIZE, sr=SAMPLE_RATE)
-# # imax = ax.imshow(D, cmap=plt.get_cmap('gray_r'),
-# #                  origin='lower', interpolation='nearest', aspect='auto')
-# plt.imshow(D, cmap="inferno")
-# plt.plot(wp[:, 0], wp[:, 1], marker='o', color='g', markersize = 1)
-# plt.title('Warping Path on Acc. Cost Matrix $D$')
-# plt.colorbar()
-# plt.xlabel('live')
-# plt.ylabel('ref')
-# plt.gca().invert_yaxis()
-
-# plt.show()
 
 prev_est = -1
 host_x = []
 host_y = []
+
+# live_idx < est_idx: faster than est
+# live_idx > est_idx: slower than est
 for live_idx, est_idx in wp:
     if prev_est == est_idx:
-        # print("continue")
         continue
-    # print(est_idx, live_idx, est_idx-live_idx)
     prev_est = est_idx
     host_x.insert(0, est_idx)
-    # host_y.insert(0, ((live_idx-est_idx)*HOP_SIZE)/SAMPLE_RATE)
-    # host_y.insert(0, (live_idx-est_idx))
-    # host_y.insert(0, (live_idx-est_idx))
     host_y.insert(0, (est_idx-live_idx))
-    # live_idx < est_idx: faster than est
-    # live_idx > est_idx: slower than est
 
 # compute average deviation
 total_frame = 0
@@ -225,8 +163,6 @@ for bpm, frame in new_list[1:]:
     prev_frame = frame
 temp = [bpm_y[-1]]*(x_1_chroma.shape[1]-len(bpm_x))
 bpm_x+=temp
-# print(len(bpm_x))
-# print(bpm_x)
 
 # 計算每個frame的latency，用16分音符作為單位 畫圖用
 idx = 0
@@ -234,6 +170,5 @@ while idx < len(host_y):
     note16_sec = midoTempoAndBpmConvert(bpm_x[idx])*1e-6/4
     host_y[idx] = ((host_y[idx]*HOP_SIZE)/SAMPLE_RATE)/note16_sec
     idx+=1
-# print(min(host_y), max(host_y))
 print(f"avg_deviation: {avg_deviation} ms")
 draw_res(host_x, host_y, bar_slice, bpm_x, bpm_y, avg_deviation)

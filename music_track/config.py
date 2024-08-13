@@ -21,11 +21,12 @@ else:
         LIVE_PATH = Path('./real_record/beethoven/data/130_v1_blank.wav')
         # REF_PATH = Path('./real_record/beethoven/ref_data/beethoven_LKavakos_violin_25bins_clear_v2.wav')
         # ACC_PATH = Path('./real_record/beethoven/ref_data/beethoven_LKavakos_piano_25bins_clear_v2.wav')
-        # REF_PATH = Path('./real_record/beethoven/ref_data/ref_newweb_v1_cut.wav')
+        # REF_PATH = Path('./real_record/beethoven/ref_data/newweb_ref_v1_cut.wav')
+        # ACC_PATH = Path('./real_record/beethoven/ref_data/newweb_acc_v1_cut.wav')
         REF_PATH = Path('./real_record/beethoven/ref_data/web_beethoven_conbined_violin_25bins_v2.wav')
         ACC_PATH = Path('./real_record/beethoven/ref_data/web_beethoven_conbined_piano_25bins_v2.wav')
-        # REF_PATH = Path('./real_record/beethoven/ref_data/ref_web_25bins.wav')
-        # ACC_PATH = Path('./real_record/beethoven/ref_data/acc_web_25bins.wav')
+        # REF_PATH = Path('./real_record/beethoven/ref_data/web_ref_25bins.wav')
+        # ACC_PATH = Path('./real_record/beethoven/ref_data/web_acc_25bins.wav')
         # mode: test
         FOLDER = Path(f"./{REF_PATH.parent.parent}/tracking_result/{REF_PATH.stem}/{DATE}_{LIVE_PATH.stem}") 
     else:

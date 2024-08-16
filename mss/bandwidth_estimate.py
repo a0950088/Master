@@ -2,13 +2,15 @@ import os
 import librosa
 import numpy as np
 
-dataset_path = './bandwidth_dataset/violin'
+dataset_path = './bandwidth_dataset/violin' # 頻帶切割資料集路徑
 
 filelist = os.listdir(dataset_path)
 print(filelist)
-# violin_freq_band = np.zeros(22050)
 freq_band = np.zeros(22050)
 
+'''
+迭帶單一樂器的所有音訊資料計算fft頻率成份分布`freq_band`
+'''
 for file in filelist:
     print("processing: ", file)
     data, sr = librosa.load(dataset_path+'/'+file, sr=44100)
@@ -19,10 +21,11 @@ for file in filelist:
     for sample in range(samples_p//2):
         freq_band[round(frequencies[sample])-1]+=amplitudes[sample]
 
-total = np.sum(freq_band)
-max_b = np.max(freq_band)
-VIOLIN_CUT_PROPORTION = (max_b/total)*14 # 手動調整閥值
-PIANO_CUT_PROPORTION = (max_b/total)*1.05 # 手動調整閥值
+total = np.sum(freq_band) # 加總所有頻率成份的值
+max_b = np.max(freq_band) # 找出最多成份的頻率所擁有的值
+VIOLIN_CUT_PROPORTION = (max_b/total)*14 # 設定小提琴的切割比例閥值(手動調整閥值)
+PIANO_CUT_PROPORTION = (max_b/total)*1.05 # 設定鋼琴的切割比例閥值(手動調整閥值)
+MIN_FREQ_CUT = 100 # 最小頻率切割值
 
 cut_point = 0
 freq_val = 0
@@ -30,7 +33,7 @@ total_freq_val = 0
 prev_i = 0
 for i in range(0, 22050):
     # 使用 VIOLIN_CUT_PROPORTION 和 PIANO_CUT_PROPORTION 計算兩種樂器的切割點
-    if freq_val >= VIOLIN_CUT_PROPORTION and (i-prev_i) >= 100:
+    if freq_val >= VIOLIN_CUT_PROPORTION and (i-prev_i) >= MIN_FREQ_CUT:
         cut_point+=1
         freq_val = 0
         prev_i = i

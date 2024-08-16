@@ -951,7 +951,7 @@ if __name__ == "__main__":
     for k in tqdm.tqdm(range(len(train_dataset))):
         output_dir = Path(f"{newdataset}/train/{k+100}")
         output_dir.mkdir(0o777, exist_ok = True, parents = True)
-        # mix, tg, intf = train_dataset[k]
+        mix, tg, intf = train_dataset[k]
         # total_training_duration += mix.shape[1] / train_dataset.sample_rate
         x, y = train_dataset[k]
         total_training_duration += x.shape[1] / train_dataset.sample_rate
@@ -966,13 +966,13 @@ if __name__ == "__main__":
                 tg.T,
                 train_dataset.sample_rate)
             sf.write(
-                f"{str(output_dir)}/violin.wav",
+                f"{str(output_dir)}/violin.wav" if args.target == "piano" else f"{str(output_dir)}/piano.wav",
                 intf.T,
                 train_dataset.sample_rate)
     for k in tqdm.tqdm(range(len(valid_dataset))):
         output_dir = Path(f"{newdataset}/train/{k}")
         output_dir.mkdir(0o777, exist_ok = True, parents = True)
-        # mix, tg, intf = valid_dataset[k]
+        mix, tg, intf = valid_dataset[k]
         # total_training_duration += mix.shape[1] / train_dataset.sample_rate
         x, y = valid_dataset[k]
         total_training_duration += x.shape[1] / train_dataset.sample_rate
@@ -987,7 +987,7 @@ if __name__ == "__main__":
                 tg.T,
                 train_dataset.sample_rate)
             sf.write(
-                f"{str(output_dir)}/violin.wav",
+                f"{str(output_dir)}/violin.wav" if args.target == "piano" else f"{str(output_dir)}/piano.wav",
                 intf.T,
                 train_dataset.sample_rate)
     

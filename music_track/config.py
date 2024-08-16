@@ -4,7 +4,7 @@ from numpy import hanning
 
 """Mode"""
 MODE = 'test' # live
-FILE_TYPE = 'record' # midi
+FILE_TYPE = 'midi' # record
 
 """ File """
 DATE = datetime.date.today()

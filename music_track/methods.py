@@ -167,6 +167,7 @@ class ODTW:
         self.rpe_reset = False
         
         self.output_points = []
+        
         # use to draw
         self.acc_path = []
         self.offline_path = []

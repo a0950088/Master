@@ -19,39 +19,43 @@ class AudioData():
     def __init__(self, ref, acc,
                  md_q, rpe_feature_q, odtw_feature_q, res_path_q, 
                  md_event, mt_event):
-        self.ref = ref
-        self.acc = acc
+        self.ref = ref # 參考音訊
+        self.acc = acc # 伴奏音訊
         
-        self.music_detector_queue = md_q
-        self.low_feature_queue = rpe_feature_q
-        self.high_feature_queue = odtw_feature_q
-        self.res_path_queue = res_path_q
+        self.music_detector_queue = md_q # 音樂偵測器queue
+        self.low_feature_queue = rpe_feature_q # # 低解析度特徵queue
+        self.high_feature_queue = odtw_feature_q # 高解析度特徵queue
+        self.res_path_queue = res_path_q # 輸出路徑queue
         
-        self.music_detector_event = md_event
-        self.music_trackers_event = mt_event
+        self.music_detector_event = md_event # 音樂偵測器事件
+        self.music_trackers_event = mt_event # 音樂追蹤事件
         
+        # 現場音訊特徵
         self.live_stft_feature = np.zeros(((cfg.WINDOW_SIZE//2)+1, 0), dtype=np.float32)
         self.live_high_feature = np.zeros((cfg.FRAME_SIZE, 0), dtype=np.float32)
         self.live_high_diff_feature = np.zeros((cfg.FRAME_SIZE, 0), dtype=np.float32)
         self.live_low_feature = np.zeros((cfg.FRAME_SIZE, 0), dtype=np.float32)
         self.live_low_diff_feature = np.zeros((cfg.FRAME_SIZE, 0), dtype=np.float32)
         
+        # 參考音訊特徵
         self.ref_stft_feature = self.getSTFTFeature(self.ref)
         self.ref_high_feature = self.getHighFeature(self.ref_stft_feature)
         self.ref_low_feature = self.getLowFeature(self.ref_high_feature)
         
+        # 伴奏音訊特徵
         self.acc_stft_feature = self.getSTFTFeature(self.acc)
         
+        # 音樂偵測器會用到的音訊資料
         silence_feature = self.getSTFTFeature(np.zeros(cfg.HALF_SEC_FRAME, dtype=np.float32))
         self.silence_feature = self.getHighFeature(silence_feature)
         # self.md_ref_feature = self.ref_high_feature[:, :self.silence_feature.shape[1]]
         self.half_sec_ref_mean_amplitude = np.abs(self.ref[:cfg.HALF_SEC_FRAME]).mean()
         # self.half_sec_ref_RMS = np.sqrt(np.mean(self.ref[:cfg.HALF_SEC_FRAME] ** 2))
         
-        self.mt_start_frame = 0
+        self.mt_start_frame = 0 # 紀錄音樂追蹤開始時的frame
         self.mt_adjust_amplitude = 1
         
-        self.output_path = []
+        self.output_path = [] # 音樂追蹤輸出路徑
         
         log.info(f"MD mean amplitude: {self.half_sec_ref_mean_amplitude}")
         log.info(f"Ref data shape: {self.ref_stft_feature.shape, self.ref_high_feature.shape, self.ref_low_feature.shape}")
@@ -65,27 +69,11 @@ class AudioData():
     def onlineMdFeatureExtraction(self, half_seg):
         if self.detectMuteLiveSegment(half_seg):
             return
-        # seg_mean_amplitude = np.abs(half_seg).mean()
-        # seg_rms = np.sqrt(np.mean(half_seg ** 2))
-        # log.info(f"seg_mean_amplitude: {seg_mean_amplitude}, seg RMS: {seg_rms}")
-        # if seg_rms <= cfg.RMS_THRESHOLD or seg_mean_amplitude <= cfg.MEAN_AMPLITUDE_THRESHOLD:
-        #     return
-        
-        # self.mt_adjust_amplitude = self.half_sec_ref_mean_amplitude/seg_mean_amplitude
-        # if self.mt_adjust_amplitude <= cfg.MIN_ADJUST_MAG:
-        #     self.mt_adjust_amplitude = cfg.MIN_ADJUST_MAG
-        # elif self.mt_adjust_amplitude >= cfg.MAX_ADJUST_MAG:
-        #     self.mt_adjust_amplitude = cfg.MAX_ADJUST_MAG
-        
-        '''先不要調整amplitude'''
-        # log.info(f"mt_adjust_amplitude: {self.mt_adjust_amplitude}")
-        # half_seg *= self.mt_adjust_amplitude
         
         stft_feature = self.getSTFTFeature(half_seg)
         high_feature = self.getHighFeature(stft_feature)
         
         self.music_detector_queue.put(high_feature)
-        # log.info(f"music_detector_queue: {self.music_detector_queue.qsize()}")
     
     def onlineHighFeatureExtraction(self, seg):
         if len(seg) < cfg.WINDOW_SIZE:
@@ -195,12 +183,10 @@ class AudioData():
         count = 0
         avg_deviation = 0
         prei = -1
-        # print(wp, type(wp), len(wp))
         new_offline_path = []
         for i,j in wp:
             if i == prei:
                 continue
-            # print(i)
             avg_deviation += abs(self.output_path[i][1]-j)
             prei = i
             count += 1
@@ -213,13 +199,9 @@ class AudioData():
         fig = plt.figure(figsize=(10, 8))
         ax = fig.add_subplot(111)
         plt.imshow(D.T, cmap="inferno")
-        # for i in range(len(self.output_path)):
-        #     print(self.output_path[i], new_offline_path[len(self.output_path)-1-i])
             
         plt.plot(self.output_path[:, 0], self.output_path[:, 1], marker='o', color='green', markersize = 1)
         plt.plot(wp[:, 0], wp[:, 1], marker='o', color='lightskyblue', markersize = 1)
-        # plt.scatter(wp[:, 0], wp[:, 1], marker='o', c='lightskyblue')
-        # plt.scatter(self.output_path[:, 0], self.output_path[:, 1], marker='o', c='green')
         plt.title(f"Offline(blue) & Online(green) Path\n Avarage Deviation Frames: {avg_deviation} frames\n Avarage Deviation ms: {avg_deviation*cfg.HOP_SIZE/cfg.SAMPLE_RATE*1000} ms\n")
         plt.colorbar()
         plt.xlabel('live frame')
@@ -243,27 +225,18 @@ class AudioData():
         ax2.set_title('(b) live_low_feature', y=-0.08)
         img_l = specshow(live_high, sr=cfg.SAMPLE_RATE, hop_length=cfg.HOP_SIZE, x_axis='frames', y_axis='mel', fmax=8000, ax=ax1)
         img2_l = specshow(live_low, sr=cfg.SAMPLE_RATE, hop_length=13230, x_axis='frames', y_axis='mel', fmax=8000, ax=ax2)
-        # plt.colorbar(img_l, ax=[ax1,ax2], format='%+2.f')
-        # plt.colorbar(img, ax=[ax1,], format='%+2.f')
-        # plt.savefig(f"{folder}/live_feature.png")
-        # plt.show()
         
-        # _, ref_high, ref_low = offlineFeatureExtraction(ref)
-        # print(ref_high.shape, ref_low.shape)
         ref_high = power_to_db(np.abs(ref_high)**2, ref=np.max)
         ref_low = power_to_db(np.abs(ref_low)**2, ref=np.max)
-        # fig = plt.figure(figsize=(15, 9))
         ax3 = fig.add_subplot(223)
         ax3.set_title('(c) ref_high_feature', y=-0.08)
         ax4 = fig.add_subplot(224)
         ax4.set_title('(d) ref_low_feature', y=-0.08)
         img_r = specshow(ref_high, sr=cfg.SAMPLE_RATE, hop_length=cfg.HOP_SIZE, x_axis='frames', y_axis='mel', fmax=8000, ax=ax3)
         img2_r = specshow(ref_low, sr=cfg.SAMPLE_RATE, hop_length=13230, x_axis='frames', y_axis='mel', fmax=8000, ax=ax4)
-        # plt.colorbar(img_l, ax=[ax1,ax2,ax3,ax4], format='%+2.f')
+
         fig.tight_layout()
-        # plt.savefig(f"{folder}/ref_feature.png")
         plt.savefig(f"{cfg.FOLDER}/feature.png")
-        # plt.show()
     
     
     def writeOutputAudio(self, record, live, output):
@@ -273,17 +246,8 @@ class AudioData():
         for i, j in self.output_path[self.mt_start_frame:]:
             if j < original_acc_frames.shape[0]:
                 adjust_acc_frames = np.concatenate((adjust_acc_frames, original_acc_frames[np.newaxis,j]))
-        # y_inv = griffinlim(adjust_acc_frames.T, hop_length=cfg.HOP_SIZE, win_length=cfg.WINDOW_SIZE, n_fft=cfg.NFFT, center=False)
-        # adjust_acc_audio = istft(adjust_acc_frames.T, n_fft=cfg.NFFT, hop_length=cfg.HOP_SIZE, win_length=cfg.WINDOW_SIZE, center=False)
         adjust_acc_audio = self.getISTFTFeature(adjust_acc_frames.T)
         
-        # while not self.res_path_queue.empty():
-        #     i,j = self.res_path_queue.get()
-        #     if j < original_acc_frames.shape[0]:
-        #         adjust_acc_frames = np.concatenate((adjust_acc_frames, original_acc_frames[np.newaxis,j]))
-        # adjust_acc_audio = istft(adjust_acc_frames.T, n_fft=cfg.NFFT, hop_length=cfg.HOP_SIZE, win_length=cfg.WINDOW_SIZE, center=False)
-        
-        # ''' # write result
         output_main_record = f"{cfg.FOLDER}/output_main_record.wav"
         output_live = f"{cfg.FOLDER}/live_record.wav"
         output_streamacc = f"{cfg.FOLDER}/live_acc_record.wav"
